@@ -1,0 +1,10 @@
+.card {
+  padding: 48px;
+  background-color: #111;
+}
+
+.card-footer {
+  margin-top: 48px;
+  display: flex;
+  gap: 16px;
+}

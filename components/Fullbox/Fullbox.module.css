@@ -1,0 +1,10 @@
+.fullbox {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+  max-height: none;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
