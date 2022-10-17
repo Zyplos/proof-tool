@@ -1,7 +1,5 @@
 import MainLayout from "../../../components/MainLayout";
 import useSWR from "swr";
-import { authFetcher } from "../../../internals/fetcher";
-import { useAuth } from "../../../firebase/app/AuthUserContext";
 import { useEffect, useState, useRef } from "react";
 import Card from "../../../components/Card";
 import { Button, LinkedButton } from "../../../components/Button";
@@ -10,51 +8,29 @@ import styles from "../../../styles/Library.module.css";
 import Fullbox from "../../../components/Fullbox";
 import Loader from "../../../components/Loader";
 import Heading from "../../../components/Heading";
+import { useSession, signIn } from "next-auth/react";
 
 export default function ApprovalsIndex() {
-  const { getIdToken, authUser, loading } = useAuth();
-  const [idToken, setIdToken] = useState(null);
-  const [searchUid, setSearchUid] = useState(null);
+  // const { getIdToken, authUser, loading } = useAuth();
+  // const [idToken, setIdToken] = useState(null);
+  const { data: session, status: sessionStatus } = useSession({
+    required: true,
+    onUnauthenticated() {
+      signIn("google");
+    },
+  });
 
+  const [searchUid, setSearchUid] = useState(null);
   const searchRef = useRef();
 
-  const { data, error } = useSWR(idToken && searchUid ? ["/api/teacher/students/" + searchUid, idToken] : null, authFetcher);
+  const { data, error } = useSWR(searchUid ? "/api/teacher/students/" + searchUid : null);
 
-  // useEffect to asyncronously getIdToken
-  useEffect(() => {
-    async function grabToken() {
-      const token = await getIdToken();
-      setIdToken(token);
-    }
-
-    grabToken();
-  }, [getIdToken]);
-
-  if (loading) {
+  if (sessionStatus === "loading") {
     return (
       <MainLayout>
         <Fullbox>
           <Loader width="128px" height="128px" />
-          Loading user...
-        </Fullbox>
-      </MainLayout>
-    );
-  }
-
-  if (!loading && !authUser) {
-    return (
-      <MainLayout>
-        <Fullbox>Not logged in.</Fullbox>
-      </MainLayout>
-    );
-  }
-
-  if (error) {
-    return (
-      <MainLayout>
-        <Fullbox>
-          <p className={styles["display-text"]}>{error.status}</p>
-          <p>{error.status == "404" ? "That user wasn't found." : error.info.message}</p>
+          Checking user...
         </Fullbox>
       </MainLayout>
     );
@@ -88,7 +64,12 @@ export default function ApprovalsIndex() {
         />
       </form>
 
-      {error && <p>{error.info.message}</p>}
+      {error && (
+        <>
+          <p className={styles["display-text"]}>{error.status}</p>
+          <p>{error.status == "404" ? "That user wasn't found." : error.info.message}</p>
+        </>
+      )}
 
       <h2>Created Proofs</h2>
       {data && data.created.failed && <p>{data.created.message || "Error trying to get created proofs for student."}</p>}

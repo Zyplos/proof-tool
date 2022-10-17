@@ -21,6 +21,8 @@ export const validJustifications = {
   distributivity: "Distributivity",
   domination: "Domination",
   doublenegation: "Double negation",
+  existentialinstantiation: "Existential Instantiation",
+  existentialgeneralization: "Existential Generalization",
   given: "Given",
   hypotheticalsyllogism: "Hypothetical syllogism",
   idempotency: "Idempotency",
@@ -31,4 +33,21 @@ export const validJustifications = {
   negation: "Negation",
   resolution: "Resolution",
   simplification: "Simplification",
+  universalinstantiation: "Universal Instantiation",
+  universalgeneralization: "Universal Generalization",
+};
+
+export const justificationReferenceNumbers = {
+  modusponens: 2,
+  modustollens: 2,
+  hypotheticalsyllogism: 2,
+  disjunctivesyllogism: 2,
+  addition: 1,
+  simplification: 1,
+  conjunction: 2,
+  resolution: 2,
+  universalinstantiation: 1,
+  universalgeneralization: 1,
+  existentialinstantiation: 1,
+  existentialgeneralization: 1,
 };

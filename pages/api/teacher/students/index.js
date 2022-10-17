@@ -1,16 +1,17 @@
-import { getAllUserProfiles } from "../../../../firebase/admin/firestore";
-import { reqIsAuthenticated } from "../../../../internals/apiUtils";
+import { getAllUserProfiles } from "../../../../database";
+import { getServerSession } from "../../../../internals/apiUtils";
 
 export default async function handler(req, res) {
-  const { cursor } = req.query;
-
   if (req.method === "GET") {
-    const verifyAuth = await reqIsAuthenticated(req, true);
-    if (verifyAuth.failed) {
-      return res.status(401).json({ message: verifyAuth.message });
+    const session = await getServerSession(req, res);
+    if (session.failed) {
+      return res.status(500).json({ message: session.message });
+    }
+    if (!session.user.admin) {
+      return res.status(500).json({ message: "Unauthorized to query users." });
     }
 
-    const usersResult = await getAllUserProfiles(cursor);
+    const usersResult = await getAllUserProfiles();
     if (usersResult.failed) {
       return res.status(400).json({ message: usersResult.message });
     }

@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/router";
 import useSWRImmutable from "swr/immutable";
-import { randomId } from "../../../internals/utils";
+import { justificationReferenceNumbers, randomId } from "../../../internals/utils";
 
 import Fullbox from "../../../components/Fullbox";
 import Loader from "../../../components/Loader";
@@ -9,23 +9,60 @@ import MainLayout from "../../../components/MainLayout";
 import Navbar from "../../../components/Navbar";
 import EditableMarkdown from "../../../components/EditableMarkdown";
 import styles from "../../../styles/Proof.module.css";
-import fetcher, { authFetcher } from "../../../internals/fetcher";
+import { fetcher } from "../../../internals/fetcher";
 
 import "katex/dist/katex.min.css";
 import MarkdownRenderer from "../../../components/MarkdownRenderer";
-import { useAuth } from "../../../firebase/app/AuthUserContext";
+import { useSession, signIn, signOut } from "next-auth/react";
 
 import Link from "next/link";
 import JustificationDropdown from "../../../components/JustificationDropdown";
 
-function JustificationRow({ id, rowNum, initialClaimText, justification, editProof, deleteRow, isIncorrect }) {
-  function setClaimText(newText) {
-    editProof(id, newText, justification);
+function JustificationReferences({ justification, references, onChange }) {
+  function handleChange(e, index) {
+    console.log("=======JUSTIFICATION REFERENCE CHANGE", e.target.value, index);
+    if (onChange) onChange(parseInt(e.target.value), index);
+  }
+
+  const numInputs = justificationReferenceNumbers[justification];
+  if (!numInputs) return null;
+  return (
+    <div
+      style={{
+        display: "grid",
+        marginTop: "8px",
+      }}
+    >
+      <label>Row References:</label>
+      {[...Array(numInputs)].map((v, i) => {
+        return (
+          <input
+            type="number"
+            key={i}
+            min={1}
+            value={references[i]}
+            onChange={(e) => {
+              handleChange(e, i);
+            }}
+          />
+        );
+      })}
+    </div>
+  );
+}
+
+function JustificationRow({ id, rowNum, initialClaimText, justification, references, editClaim, editJustification, editReference, deleteRow, isIncorrect, feedback }) {
+  function setClaimText(newClaim) {
+    editClaim(id, newClaim);
   }
 
   function setJustification(newJustification) {
-    console.log("SETTING NEW JUSTIFICATION", id, initialClaimText, newJustification);
-    editProof(id, initialClaimText, newJustification);
+    // console.log("SETTING NEW JUSTIFICATION", id, initialClaimText, newJustification);
+    editJustification(id, newJustification);
+  }
+
+  function setReference(newReference, index) {
+    editReference(id, newReference, index);
   }
 
   return (
@@ -41,25 +78,35 @@ function JustificationRow({ id, rowNum, initialClaimText, justification, editPro
       <div className={styles["proof-separator"]}>∵</div>
       <div className={justification === "unknown" ? styles["highlight-cell"] : ""}>
         <JustificationDropdown initialValue={justification} onChange={setJustification} includeUnknown={true} />
+        <JustificationReferences justification={justification} references={references} onChange={setReference} />
+
+        {feedback && <p style={{ backgroundColor: "red" }}>{feedback}</p>}
       </div>
     </>
   );
 }
 
 export default function Proof() {
-  const { getIdToken } = useAuth();
+  const { data: session, status: sessionStatus } = useSession({
+    required: true,
+    onUnauthenticated() {
+      signIn("google");
+    },
+  });
+
+  // const { getIdToken } = useAuth();
   const router = useRouter();
   const { id } = router.query; // useSWR doesnt like it if you use router.id directly
 
   // using useSWRImmutable so proof doesn't change once you load the page
-  const { data, error, mutate } = useSWRImmutable(id ? "/api/proofs/" + id : null);
+  const { data, error, mutate } = useSWRImmutable(id ? "/api/solve/" + id : null);
   const [rows, setRows] = useState(null);
   const [formFeedback, setFormFeedback] = useState("");
 
   useEffect(() => {
     let changecheck = false;
     if (data) {
-      data.proof.forEach((rowchange, i) => {
+      data.rows.forEach((rowchange, i) => {
         if (rowchange.justification === "given") return;
         // calculate a chance of changing the justification
         if (Math.random() < 0.35) {
@@ -71,11 +118,11 @@ export default function Proof() {
       // somehow, no rows were randomly changed, so we manually change at least one
       if (!changecheck) {
         // get all rows without "given" justification
-        const rows = data.proof.filter((row) => row.justification !== "given");
+        const rows = data.rows.filter((row) => row.justification !== "given");
         if (rows.length > 0) rows[Math.floor(Math.random() * rows.length)].justification = "unknown";
       }
 
-      setRows(data.proof);
+      setRows(data.rows);
     }
   }, [data]);
 
@@ -103,17 +150,41 @@ export default function Proof() {
 
   function addNewRow() {
     setRows((prevRows) => {
-      return [...prevRows, { claim: "", justification: "", id: randomId() }];
+      return [...prevRows, { claim: "", justification: "given", id: randomId(), references: [] }];
     });
   }
 
-  function editProof(id, claim, justification) {
+  function editClaim(id, claim) {
     setRows((prevRows) => {
       // find the row with the given id
       const row = prevRows.find((row) => row.id === id);
-      // replace the claim and justification
+      // replace the claim
       row.claim = claim;
+      // edit prevRows to include the new row
+      return [...prevRows];
+    });
+  }
+
+  function editJustification(id, justification) {
+    setRows((prevRows) => {
+      // find the row with the given id
+      const row = prevRows.find((row) => row.id === id);
+      // replace the justification
       row.justification = justification;
+      row.references = [];
+      row.feedback = null;
+      // edit prevRows to include the new row
+      return [...prevRows];
+    });
+  }
+
+  function editReference(id, reference, index) {
+    setRows((prevRows) => {
+      // find the row with the given id
+      const row = prevRows.find((row) => row.id === id);
+      // replace the justification
+      row.references[index] = reference;
+      row.feedback = null;
       // edit prevRows to include the new row
       return [...prevRows];
     });
@@ -131,32 +202,28 @@ export default function Proof() {
     setFormFeedback("Submitting...");
 
     try {
-      console.log("TRYING TO GET FTOKEN");
-      const firebaseUserIdToken = await getIdToken();
-      console.log("GOT FIREBASEUSERIDTOKEN", firebaseUserIdToken);
-      if (!firebaseUserIdToken) {
-        setFormFeedback("You must be logged in to submit a proof.");
-        return;
-      }
-
-      console.log("GOT USER TOKEN", firebaseUserIdToken);
-      const result = await authFetcher("/api/user/check", firebaseUserIdToken, {
+      const result = await fetcher("/api/solve/check", {
         method: "POST",
         body: JSON.stringify({ id, rows }),
       });
       console.log("CHECKSUBMIT", result);
-      if (result.incorrect.length > 0) {
-        setFormFeedback(<span className="info">Some rows are wrong, recheck your answers.</span>);
+      if (Object.keys(result.incorrect).length > 0) {
+        setFormFeedback(
+          <span className="info">
+            Some rows are wrong, recheck your answers. Make sure to include row references for justifications that require you to reference a row.
+          </span>
+        );
       } else {
         setFormFeedback(<span className="info">Correctly solved!</span>);
       }
 
-      const incorrectIds = result.incorrect;
+      const incorrectIds = Object.keys(result.incorrect);
       console.log("INCORRECTIDS", incorrectIds);
 
       setRows((prevRows) => {
         prevRows.forEach((row) => {
           row.incorrect = incorrectIds.includes(row.id);
+          row.feedback = result.incorrect[row.id]?.feedback;
         });
 
         return prevRows;
@@ -188,10 +255,14 @@ export default function Proof() {
             <JustificationRow
               key={row.id}
               id={row.id}
+              feedback={row.feedback}
               rowNum={index}
               initialClaimText={row.claim}
               justification={row.justification}
-              editProof={editProof}
+              references={row.references}
+              editJustification={editJustification}
+              editClaim={editClaim}
+              editReference={editReference}
               deleteRow={deleteRow}
               isIncorrect={row.incorrect}
             />

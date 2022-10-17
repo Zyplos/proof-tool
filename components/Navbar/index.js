@@ -1,11 +1,9 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import styles from "./Navbar.module.css";
 import Link from "next/link";
-import { useAuth } from "../../firebase/app/AuthUserContext";
 import { useRouter } from "next/router";
-import Image from "next/image";
-import Loader from "../Loader";
-import { Button } from "../Button";
+
+import SessionBox from "../SessionBox";
 
 function NavLink({ href, children }) {
   return (
@@ -16,14 +14,14 @@ function NavLink({ href, children }) {
 }
 
 export default function Navbar() {
-  const { authUser, loading, signInWithGoogle } = useAuth();
+  // const { authUser, loading, signInWithGoogle } = useAuth();
   const router = useRouter();
   const [open, setOpen] = useState(false);
 
   return (
     <div className={styles.navbar}>
       <span className={styles.navtitle}>
-        <Link href="/">Proof Study</Link>
+        <Link href="/">Proof Tool</Link>
       </span>
 
       <div className={styles["navbar-toggle"]} onClick={() => setOpen(!open)}>
@@ -37,48 +35,8 @@ export default function Navbar() {
 
         <NavLink href="/proof/editor">Editor</NavLink>
 
-        {authUser && authUser.admin && (
-          <>
-            <NavLink href="/teacher/approvals">Approvals</NavLink>
-            <NavLink href="/teacher/students">Students</NavLink>
-          </>
-        )}
-        {loading ? (
-          <div>
-            <Loader />
-          </div>
-        ) : (
-          <>
-            {authUser ? (
-              <NavLink href="/profile">Profile</NavLink>
-            ) : (
-              <Button
-                className={styles.navlink}
-                onClick={() => {
-                  signInWithGoogle()
-                    .then((result) => {
-                      console.log("Success. The user is created in firebase", result);
-                    })
-                    .catch((error) => {
-                      console.log("---------USERNAVBAR ERROR", error);
-                    });
-                }}
-              >
-                Sign In
-              </Button>
-            )}
-          </>
-        )}
+        <SessionBox />
       </div>
     </div>
   );
 }
-
-/* <NavLink href="/profile">
-                <div style={{ display: "flex", justifyContent: "center", alignItems: "center" }}>
-                  <div style={{ marginRight: "15px" }}>
-                    <Image src={authUser?.photoURL} style={{ borderRadius: "100%" }} alt="Profile Picture" layout="fixed" width={42} height={42} />
-                  </div>
-                  Profile
-                </div>
-              </NavLink> */

@@ -1,14 +1,14 @@
-import { getUserProfile } from "../../../firebase/admin/firestore";
-import { reqIsAuthenticated } from "../../../internals/apiUtils";
+import { getUserProfile } from "../../../database";
+import { getServerSession } from "../../../internals/apiUtils";
 
 export default async function handler(req, res) {
   if (req.method === "GET") {
-    const verifyAuth = await reqIsAuthenticated(req);
-    if (verifyAuth.failed) {
-      return res.status(401).json({ message: verifyAuth.message });
+    const session = await getServerSession(req, res);
+    if (session.failed) {
+      return res.status(500).json({ message: session.message });
     }
 
-    const studentProfile = await getUserProfile(verifyAuth.uid);
+    const studentProfile = await getUserProfile(session.user.email);
     if (studentProfile.failed) {
       return res.status(400).json({ message: studentProfile.message });
     }

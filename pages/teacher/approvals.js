@@ -1,29 +1,22 @@
 import MainLayout from "../../components/MainLayout";
 import useSWR from "swr";
-import fetcher, { authFetcher } from "../../internals/fetcher";
-import { useAuth } from "../../firebase/app/AuthUserContext";
-import { useEffect, useState } from "react";
 import Card from "../../components/Card";
 import { LinkedButton } from "../../components/Button";
 import MarkdownRenderer from "../../components/MarkdownRenderer";
 import styles from "../../styles/Library.module.css";
 import Fullbox from "../../components/Fullbox";
+import { useSession, signIn } from "next-auth/react";
+import Loader from "../../components/Loader";
 
 export default function ApprovalsIndex() {
-  const { getIdToken, authUser, loading } = useAuth();
-  const [idToken, setIdToken] = useState(null);
+  const { data: session, status: sessionStatus } = useSession({
+    required: true,
+    onUnauthenticated() {
+      signIn("google");
+    },
+  });
 
-  const { data, error } = useSWR(idToken ? ["/api/teacher/proofs", idToken] : null, authFetcher);
-
-  // useEffect to asyncronously getIdToken
-  useEffect(() => {
-    async function grabToken() {
-      const token = await getIdToken();
-      setIdToken(token);
-    }
-
-    grabToken();
-  }, [getIdToken]);
+  const { data, error } = useSWR("/api/teacher/proofs");
 
   if (error) {
     return (
@@ -33,10 +26,13 @@ export default function ApprovalsIndex() {
     );
   }
 
-  if (!loading && !authUser) {
+  if (sessionStatus === "loading") {
     return (
       <MainLayout>
-        <Fullbox>Not logged in.</Fullbox>
+        <Fullbox>
+          <Loader width="128px" height="128px" />
+          Checking user...
+        </Fullbox>
       </MainLayout>
     );
   }
@@ -53,10 +49,10 @@ export default function ApprovalsIndex() {
     <MainLayout>
       <h1>Pending Approval</h1>
 
-      {data.proofs.length === 0 && <p>No proofs pending approval.</p>}
+      {data.length === 0 && <p>No proofs pending approval.</p>}
 
       <div className={styles["layout"]}>
-        {data.proofs.map((proof) => {
+        {data.map((proof) => {
           return (
             <Card key={proof.id} footer={<LinkedButton href={`/proof/editor?id=${proof.id}`}>View</LinkedButton>}>
               <MarkdownRenderer content={proof.first_entry.claim} />

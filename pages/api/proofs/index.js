@@ -1,12 +1,12 @@
-import { insertNewProof, getAllProofs } from "../../../firebase/admin/firestore";
-import { checkProofRowsFormat, reqIsAuthenticated } from "../../../internals/apiUtils";
+import { getAllApprovedProofs, insertNewProof } from "../../../database";
+import { checkProofRowsFormat, getServerSession } from "../../../internals/apiUtils";
 
 export default async function handler(req, res) {
   // POST
   if (req.method === "POST") {
-    const verifyAuth = await reqIsAuthenticated(req);
-    if (verifyAuth.failed) {
-      return res.status(401).json({ message: verifyAuth.message });
+    const session = await getServerSession(req, res);
+    if (session.failed) {
+      return res.status(500).json({ message: session.message });
     }
 
     const { rows } = req.body;
@@ -15,7 +15,7 @@ export default async function handler(req, res) {
       return res.status(400).json({ message: verifyRows.message });
     }
 
-    const result = await insertNewProof(rows, verifyAuth.uid);
+    const result = await insertNewProof(rows, session.user.id);
     if (result.failed) {
       return res.status(400).json({ message: result.message });
     }
@@ -24,7 +24,7 @@ export default async function handler(req, res) {
 
     // GET
   } else if (req.method === "GET") {
-    const allProofs = await getAllProofs();
+    const allProofs = await getAllApprovedProofs();
     if (!allProofs) {
       return res.status(404).json({ message: "The Library has no proofs at the moment. Check back later." });
     }

@@ -1,8 +1,5 @@
 import MainLayout from "../components/MainLayout";
 import useSWR from "swr";
-import { authFetcher } from "../internals/fetcher";
-import { useAuth } from "../firebase/app/AuthUserContext";
-import { useEffect, useState } from "react";
 import Card from "../components/Card";
 import { Button, LinkedButton } from "../components/Button";
 import MarkdownRenderer from "../components/MarkdownRenderer";
@@ -10,32 +7,27 @@ import styles from "../styles/Library.module.css";
 import Fullbox from "../components/Fullbox";
 import Loader from "../components/Loader";
 import Heading from "../components/Heading";
+import { useSession, signIn, signOut } from "next-auth/react";
 
 function proofplural(num) {
   return num === 1 ? "proof" : "proofs";
 }
 
 export default function YourProofs() {
-  const { getIdToken, authUser, loading, signOut } = useAuth();
-  const [idToken, setIdToken] = useState(null);
+  const { data: session, status: sessionStatus } = useSession({
+    required: true,
+    onUnauthenticated() {
+      signIn("google");
+    },
+  });
+  const { data, error } = useSWR(sessionStatus === "authenticated" ? "/api/user" : null);
 
-  const { data, error } = useSWR(idToken ? ["/api/user", idToken] : null, authFetcher);
-
-  useEffect(() => {
-    async function grabToken() {
-      const token = await getIdToken();
-      setIdToken(token);
-    }
-
-    grabToken();
-  }, [getIdToken]);
-
-  if (!loading && !authUser) {
+  if (sessionStatus === "loading") {
     return (
       <MainLayout>
         <Fullbox>
-          <p className={styles["display-text"]}>Oops!</p>
-          <p>You must be signed in to see your profile.</p>
+          <Loader width="128px" height="128px" />
+          Checking user...
         </Fullbox>
       </MainLayout>
     );
@@ -71,11 +63,10 @@ export default function YourProofs() {
         <Heading>Profile</Heading>
         <Button onClick={signOut}>Sign Out</Button>
       </div>
-      {authUser && authUser.email && (
-        <p>
-          Signed in as <b>{authUser.email}</b>.
-        </p>
-      )}
+
+      <p>
+        Signed in as <b>{session.user.email}</b>.
+      </p>
 
       <h2>Your Proofs</h2>
       {data && (

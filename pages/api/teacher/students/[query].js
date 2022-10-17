@@ -1,27 +1,35 @@
-import { getUserProfile, queryUser } from "../../../../firebase/admin/firestore";
-import { reqIsAuthenticated } from "../../../../internals/apiUtils";
+import { getProofs, getUserCreatedProofs, getUserProfile } from "../../../../database";
+import { getServerSession } from "../../../../internals/apiUtils";
 
 export default async function handler(req, res) {
   const { query } = req.query;
   if (!query) return res.status(400).json({ message: "No query provided" });
 
   if (req.method === "GET") {
-    const verifyAuth = await reqIsAuthenticated(req, true);
-    if (verifyAuth.failed) {
-      return res.status(401).json({ message: verifyAuth.message });
+    const session = await getServerSession(req, res);
+    if (session.failed) {
+      return res.status(500).json({ message: session.message });
+    }
+    if (!session.user.admin) {
+      return res.status(500).json({ message: "Unauthorized to query users." });
     }
 
-    const queryResult = await queryUser(query);
-    if (queryResult.failed) {
-      return res.status(400).json({ message: queryResult.message });
+    const userProfile = await getUserProfile(query);
+    if (userProfile.failed) {
+      return res.status(400).json({ message: userProfile.message });
     }
+    // console.log("=======QUERYDEV", userProfile);
+    // const solvedProofs = await getProofs(userProfile.solvedIds.map((e) => ObjectId(e)));
+    // if (solvedProofs.failed) {
+    //   return res.status(400).json({ message: solvedProofs.message });
+    // }
 
-    const studentInfo = await getUserProfile(queryResult.uid);
-    if (studentInfo.failed) {
-      return res.status(400).json({ message: studentInfo.message });
-    }
+    // const createdProofs = await getUserCreatedProofs(userProfile._id.toString());
+    // if (createdProofs.failed) {
+    //   return res.status(400).json({ message: createdProofs.message });
+    // }
 
-    res.status(200).json(studentInfo);
+    res.status(200).json(userProfile);
   } else {
     res.status(405).json({ message: "Method not allowed" });
   }

@@ -1,7 +1,6 @@
 import MainLayout from "../../../components/MainLayout";
 import useSWRInfinite from "swr/infinite";
-import { authFetcher } from "../../../internals/fetcher";
-import { useAuth } from "../../../firebase/app/AuthUserContext";
+import { fetcher } from "../../../internals/fetcher";
 import { useEffect, useState, useRef } from "react";
 import Card from "../../../components/Card";
 import { Button, LinkedButton } from "../../../components/Button";
@@ -10,6 +9,8 @@ import styles from "../../../styles/Library.module.css";
 import Fullbox from "../../../components/Fullbox";
 import Loader from "../../../components/Loader";
 import Heading from "../../../components/Heading";
+import { useSession, signIn, signOut } from "next-auth/react";
+import useSWR from "swr";
 
 function UserCard(user) {
   if (user.failed) {
@@ -69,62 +70,62 @@ function UserCard(user) {
 }
 
 export default function ApprovalsIndex() {
-  const { getIdToken, authUser, loading } = useAuth();
-  const [idToken, setIdToken] = useState(null);
-
-  const { data, error, size, mutate, setSize, isValidating } = useSWRInfinite(
-    (pageIndex, previousPageData) => {
-      console.log("-------------DEVCALLER GETKEY", pageIndex, previousPageData?.pageToken);
-
-      // reached the end
-      if (previousPageData && (!previousPageData.pageToken || !previousPageData.users)) return null;
-
-      // first page, we don't have `previousPageData`
-      if (pageIndex === 0) return idToken ? [`/api/teacher/students`, idToken] : null;
-
-      // add the cursor to the API endpoint
-      return idToken ? [`/api/teacher/students?cursor=${previousPageData?.pageToken}`, idToken] : null;
+  const { data: session, status: sessionStatus } = useSession({
+    required: true,
+    onUnauthenticated() {
+      signIn("google");
     },
-    authFetcher,
-    { revalidateAll: true }
-  );
+  });
+
+  const { data, error } = useSWR("/api/teacher/students");
+  // const { getIdToken, authUser, loading } = useAuth();
+  // const [idToken, setIdToken] = useState(null);
+
+  // const { data, error, size, mutate, setSize, isValidating } = useSWRInfinite(
+  //   (pageIndex, previousPageData) => {
+  //     console.log("-------------DEVCALLER GETKEY", pageIndex, previousPageData?.pageToken);
+
+  //     // reached the end
+  //     if (previousPageData && (!previousPageData.pageToken || !previousPageData.users)) return null;
+
+  //     // first page, we don't have `previousPageData`
+  //     if (pageIndex === 0) return idToken ? [`/api/teacher/students`, idToken] : null;
+
+  //     // add the cursor to the API endpoint
+  //     return `/api/teacher/students?cursor=${previousPageData?.pageToken}`;
+  //   },
+  //   fetcher,
+  //   { revalidateAll: true }
+  // );
 
   // useEffect to asyncronously getIdToken
-  useEffect(() => {
-    async function grabToken() {
-      const token = await getIdToken();
-      console.log("-------------GRABTOKEN", token);
-      setIdToken(token);
-    }
+  // useEffect(() => {
+  //   async function grabToken() {
+  //     const token = await getIdToken();
+  //     console.log("-------------GRABTOKEN", token);
+  //     setIdToken(token);
+  //   }
 
-    grabToken();
-  }, [getIdToken]);
+  //   grabToken();
+  // }, [getIdToken]);
 
-  if (loading) {
-    return (
-      <MainLayout>
-        <Fullbox>
-          <Loader width="128px" height="128px" />
-          Loading user...
-        </Fullbox>
-      </MainLayout>
-    );
-  }
-
-  if (!loading && !authUser) {
-    return (
-      <MainLayout>
-        <Fullbox>Not logged in.</Fullbox>
-      </MainLayout>
-    );
-  }
+  // if (sessionStatus === "loading") {
+  //   return (
+  //     <MainLayout>
+  //       <Fullbox>
+  //         <Loader width="128px" height="128px" />
+  //         Checking user...
+  //       </Fullbox>
+  //     </MainLayout>
+  //   );
+  // }
 
   if (error) {
     return (
       <MainLayout>
         <Fullbox>
           <p className={styles["display-text"]}>{error.status}</p>
-          <p>{error.status == "404" ? "That user wasn't found." : error.info.message}</p>
+          <p>{error.info.message}</p>
         </Fullbox>
       </MainLayout>
     );
@@ -143,27 +144,30 @@ export default function ApprovalsIndex() {
 
   console.log("----------STUDENT PAGE DATA", data);
 
-  const noMoreUsers = !data[data.length - 1].users || !data[data.length - 1].pageToken;
+  // const noMoreUsers = !data[data.length - 1].users || !data[data.length - 1].pageToken;
 
   return (
     <MainLayout>
       <div className={styles["flex-header"]}>
         <Heading>All Students</Heading>
-        <Button disabled={isValidating} onClick={() => mutate()}>
+        {/* <Button disabled={isValidating} onClick={() => mutate()}>
           {isValidating ? "Refreshing..." : "Refresh"}
-        </Button>
+        </Button> */}
       </div>
 
-      {data.map((page, index) => {
+      {/* {data.map((page, index) => {
         console.log("----------PAGE", page);
         return page.users.map((user) => {
           return UserCard(user);
         });
+      })} */}
+      {data.users.map((user) => {
+        return UserCard(user);
       })}
 
-      <Button disabled={noMoreUsers} onClick={() => setSize(size + 1)}>
+      {/* <Button disabled={noMoreUsers} onClick={() => setSize(size + 1)}>
         {noMoreUsers ? "No more students" : "Load more students"}
-      </Button>
+      </Button> */}
     </MainLayout>
   );
 }

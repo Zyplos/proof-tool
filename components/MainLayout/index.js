@@ -1,4 +1,5 @@
 import Navbar from "../Navbar";
+import Footer from "../Footer";
 import styles from "./MainLayout.module.css";
 
 export default function MainLayout({ children }) {
@@ -6,7 +7,7 @@ export default function MainLayout({ children }) {
     <div className={styles["main-layout"]}>
       <Navbar />
       <div className={styles["content-layout"]}>{children}</div>
-      <a href="https://forms.gle/KXumt5XSuZjufvon9" className={styles.githublink} target="_blank" rel="noreferrer">
+      {/* <a href="https://forms.gle/KXumt5XSuZjufvon9" className={styles.githublink} target="_blank" rel="noreferrer">
         <svg id="Layer_2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32.58 31.77" width="32px" height="32px">
           <g id="Layer_1-2">
             <path
@@ -16,7 +17,8 @@ export default function MainLayout({ children }) {
             />
           </g>
         </svg>
-      </a>
+      </a> */}
+      <Footer />
     </div>
   );
 }

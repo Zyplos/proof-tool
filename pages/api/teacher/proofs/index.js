@@ -1,14 +1,17 @@
-import { getAllPendingProofs } from "../../../../firebase/admin/firestore";
-import { reqIsAuthenticated } from "../../../../internals/apiUtils";
+import { getAllPendingProofs } from "../../../../database";
+import { getServerSession } from "../../../../internals/apiUtils";
 
 export default async function handler(req, res) {
   if (req.method === "GET") {
-    const verifyAuth = await reqIsAuthenticated(req, true);
-    if (verifyAuth.failed) {
-      return res.status(401).json({ message: verifyAuth.message });
+    const session = await getServerSession(req, res);
+    if (session.failed) {
+      return res.status(500).json({ message: session.message });
+    }
+    if (!session.user.admin) {
+      return res.status(500).json({ message: "Unauthorized to get pending proofs." });
     }
 
-    const allPendingProofs = await getAllPendingProofs(verifyAuth.uid);
+    const allPendingProofs = await getAllPendingProofs();
     if (allPendingProofs.failed) {
       return res.status(400).json({ message: allPendingProofs.message });
     }

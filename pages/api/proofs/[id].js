@@ -1,5 +1,5 @@
-import { fetchProof, updateProof, deleteProof } from "../../../firebase/admin/firestore";
-import { checkProofRowsFormat, reqIsAuthenticated } from "../../../internals/apiUtils";
+import { checkProofRowsFormat, getServerSession } from "../../../internals/apiUtils";
+import { deleteProof, getProof, updateProof } from "../../../database";
 
 export default async function proofObtainHandler(req, res) {
   const { id } = req.query;
@@ -7,20 +7,30 @@ export default async function proofObtainHandler(req, res) {
 
   // GET
   if (req.method === "GET") {
+    const session = await getServerSession(req, res);
+    if (session.failed) {
+      return res.status(500).json({ message: session.message });
+    }
+
     console.log("PROOF OBTAIN GET", id);
-    const proofData = await fetchProof(id);
-    console.log("PROOF OBTAIN FIREBASE", proofData);
+    const proofData = await getProof(id);
+    console.log("PROOF OBTAIN DATABASE", proofData);
     if (!proofData) {
       return res.status(404).json({ message: "Proof not found" });
     }
-    res.status(200).json({ _gotcha: "naughty naughty. ill fix this soon", ...proofData });
+
+    if (proofData.uid !== session.user._id && session.user.admin) {
+      return { failed: true, message: "You cannot view proofs you did not make." };
+    }
+
+    res.status(200).json(proofData);
 
     // PUT
   } else if (req.method === "PUT") {
     // check if user is authenticated
-    const verifyAuth = await reqIsAuthenticated(req);
-    if (verifyAuth.failed) {
-      return res.status(401).json({ message: verifyAuth.message });
+    const session = await getServerSession(req, res);
+    if (session.failed) {
+      return res.status(500).json({ message: session.message });
     }
 
     // checking if request body is correctly formatted
@@ -30,7 +40,7 @@ export default async function proofObtainHandler(req, res) {
       return res.status(400).json({ message: verifyRows.message });
     }
 
-    const result = await updateProof(id, proofData.rows, verifyAuth.uid);
+    const result = await updateProof(id, proofData.rows, session.user.id, session.user.admin);
     if (result.failed) {
       return res.status(400).json({ message: result.message });
     }
@@ -42,12 +52,12 @@ export default async function proofObtainHandler(req, res) {
   } else if (req.method === "DELETE") {
     console.log("PROOF ID API GOT DELETE");
 
-    const verifyAuth = await reqIsAuthenticated(req);
-    if (verifyAuth.failed) {
-      return res.status(401).json({ message: verifyAuth.message });
+    const session = await getServerSession(req, res);
+    if (session.failed) {
+      return res.status(500).json({ message: session.message });
     }
 
-    const result = await deleteProof(id, verifyAuth.uid);
+    const result = await deleteProof(id, session.user.id, session.user.admin);
     if (result.failed) {
       return res.status(400).json({ message: result.message });
     }

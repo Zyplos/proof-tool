@@ -16,3 +16,11 @@ export function LinkedButton({ type = "gray", children, className, mini, ...prop
     </Link>
   );
 }
+
+export function NavButton({ type = "gray", children, className = "", mini, ...props }) {
+  return (
+    <button className={`${mini ? styles["tool-button-mini"] : styles["tool-button"]} ${styles.navlink} ${className}`} {...props}>
+      {children}
+    </button>
+  );
+}

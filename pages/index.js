@@ -1,4 +1,3 @@
-import { useEffect, useRef, useState } from "react";
 import useSWR from "swr";
 import styles from "../styles/Library.module.css";
 
@@ -8,42 +7,26 @@ import Loader from "../components/Loader";
 import Card from "../components/Card";
 import { LinkedButton } from "../components/Button";
 import MarkdownRenderer from "../components/MarkdownRenderer";
-import { useAuth } from "../firebase/app/AuthUserContext";
-import { fetcher, authFetcher } from "../internals/fetcher";
 import Head from "next/head";
+import { useSession } from "next-auth/react";
 
 function CardFooter({ proofId, authUser }) {
   return (
     <>
       <LinkedButton href={`/proof/solve/${proofId}`}>Solve</LinkedButton>
-      {authUser && authUser.admin && <LinkedButton href={`/proof/editor?id=${proofId}`}>Edit</LinkedButton>}
+      {authUser && authUser.user.admin && <LinkedButton href={`/proof/editor?id=${proofId}`}>Edit</LinkedButton>}
     </>
   );
 }
 
 export default function Library() {
-  const { getIdToken, authUser } = useAuth();
-  const { data, error } = useSWR("/api/proofs");
-  const [solvedProofs, setSolvedProofs] = useState([]);
+  const { data: session, status } = useSession();
+  const { data: proofsData, error: proofsError } = useSWR("/api/proofs");
+  const { data: solvedIdsData, error: solvedIdsError } = useSWR(session ? "/api/user/solved" : null);
 
-  useEffect(() => {
-    if (!getIdToken) return;
+  console.log("========SESSIONIDNEX", session);
 
-    const fetchSolvedProofs = async () => {
-      const firebaseUserIdToken = await getIdToken();
-      if (!firebaseUserIdToken) {
-        setSolvedProofs([]);
-        return;
-      }
-
-      const solved = await authFetcher("/api/user/solved", firebaseUserIdToken);
-      setSolvedProofs(solved.proofs);
-    };
-
-    fetchSolvedProofs().catch(console.error);
-  }, [getIdToken]);
-
-  if (error) {
+  if (proofsError) {
     return (
       <MainLayout>
         <Fullbox>
@@ -54,7 +37,7 @@ export default function Library() {
     );
   }
 
-  if (!data) {
+  if (!proofsData) {
     return (
       <MainLayout>
         <Fullbox>
@@ -65,34 +48,24 @@ export default function Library() {
     );
   }
 
-  if (!solvedProofs) {
-    return (
-      <MainLayout>
-        <Fullbox>
-          <Loader width="128px" height="128px" />
-          Fetching solved proofs...
-        </Fullbox>
-      </MainLayout>
-    );
-  }
-
   return (
     <MainLayout>
       <Head>
-        <title>Proof Study</title>
+        <title>Proof Tool</title>
         <meta name="description" content="indev" />
         <link rel="icon" href="/favicon.ico" />
       </Head>
 
       <h1>Library</h1>
+      {proofsData.length === 0 && <p>Seems no proofs are in The Library at the moment. Check back later!</p>}
       <div className={styles["layout"]}>
-        {data.proofs.map((proof) => {
+        {proofsData.map((proof) => {
           console.log("MAPPING ID", proof);
           return (
             <Card
               key={proof.id}
-              footer={<CardFooter authUser={authUser ?? null} proofId={proof.id} />}
-              className={solvedProofs.includes(proof.id) ? styles["green-border"] : ""}
+              footer={<CardFooter authUser={session ?? null} proofId={proof.id} />}
+              className={solvedIdsData?.solvedIds?.includes(proof.id) ? styles["green-border"] : ""}
             >
               <MarkdownRenderer content={proof.first_entry.claim} />
             </Card>

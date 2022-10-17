@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/router";
 import useSWRImmutable from "swr/immutable";
-import { randomId } from "../../internals/utils";
+import { justificationReferenceNumbers, randomId } from "../../internals/utils";
 
 import Fullbox from "../../components/Fullbox";
 import Loader from "../../components/Loader";
@@ -9,22 +9,61 @@ import MainLayout from "../../components/MainLayout";
 import Navbar from "../../components/Navbar";
 import EditableMarkdown from "../../components/EditableMarkdown";
 import styles from "../../styles/Proof.module.css";
-import { authFetcher, fetcher } from "../../internals/fetcher";
+import { fetcher } from "../../internals/fetcher";
 
-import { useAuth } from "../../firebase/app/AuthUserContext";
 import Heading from "../../components/Heading";
 import { Button, LinkedButton } from "../../components/Button";
 import JustificationDropdown from "../../components/JustificationDropdown";
 import MarkdownRenderer from "../../components/MarkdownRenderer";
 
-function JustificationRow({ id, rowNum, initialClaimText, justification, editProof, deleteRow }) {
-  function setClaimText(newText) {
-    editProof(id, newText, justification);
+import { useSession, signIn, signOut } from "next-auth/react";
+import { getProof } from "../../database";
+
+function JustificationReferences({ justification, references, onChange }) {
+  function handleChange(e, index) {
+    console.log("=======JUSTIFICATION REFERENCE CHANGE", e.target.value, index);
+    if (onChange) onChange(parseInt(e.target.value), index);
+  }
+
+  const numInputs = justificationReferenceNumbers[justification];
+  if (!numInputs) return null;
+  return (
+    <div
+      style={{
+        display: "grid",
+        marginTop: "8px",
+      }}
+    >
+      <label>Row References:</label>
+      {[...Array(numInputs)].map((v, i) => {
+        return (
+          <input
+            type="number"
+            key={i}
+            min={1}
+            value={references[i]}
+            onChange={(e) => {
+              handleChange(e, i);
+            }}
+          />
+        );
+      })}
+    </div>
+  );
+}
+
+function JustificationRow({ id, rowNum, initialClaimText, justification, references, editClaim, editJustification, editReference, deleteRow }) {
+  function setClaimText(newClaim) {
+    editClaim(id, newClaim);
   }
 
   function setJustification(newJustification) {
     // console.log("SETTING NEW JUSTIFICATION", id, initialClaimText, newJustification);
-    editProof(id, initialClaimText, newJustification);
+    editJustification(id, newJustification);
+  }
+
+  function setReference(newReference, index) {
+    editReference(id, newReference, index);
   }
 
   return (
@@ -48,6 +87,7 @@ function JustificationRow({ id, rowNum, initialClaimText, justification, editPro
       <div className={styles["proof-separator"]}>∵</div>
       <div>
         <JustificationDropdown initialValue={justification} onChange={setJustification} />
+        <JustificationReferences justification={justification} references={references} onChange={setReference} />
       </div>
       <div className={styles["mobile-separator"]}></div>
     </>
@@ -55,16 +95,51 @@ function JustificationRow({ id, rowNum, initialClaimText, justification, editPro
 }
 
 export default function Proof({ data, id }) {
-  const { loading, authUser, getIdToken } = useAuth();
+  // const { loading, authUser, getIdToken } = useAuth();
+  const { data: session, status: sessionStatus } = useSession({
+    required: true,
+    onUnauthenticated() {
+      signIn("google");
+    },
+  });
   const router = useRouter();
 
-  console.log("PROOFPAGE", data, id, authUser);
+  console.log("PROOFPAGE", data, id, session, sessionStatus);
 
-  const [rows, setRows] = useState(data.proof);
+  const [rows, setRows] = useState(data.rows);
   const [proofStatus, setProofStatus] = useState(data.approved);
   const [formFeedback, setFormFeedback] = useState("");
   const [isUpdating, setIsUpdating] = useState(false);
 
+  // https://stackoverflow.com/a/73977517
+  // quick way to prevent the user from leaving without saving
+  const [unsavedChanges, setUnsavedChanges] = useState(true);
+  const warningText = "Are you sure you want to leave this page? Make sure you've saved your proof!";
+
+  useEffect(() => {
+    const handleWindowClose = (e) => {
+      if (!unsavedChanges) return;
+      e.preventDefault();
+      return (e.returnValue = warningText);
+    };
+    const handleBrowseAway = () => {
+      if (!unsavedChanges) return;
+      if (window.confirm(warningText)) return;
+      router.events.emit("routeChangeError");
+      throw "routeChange aborted.";
+    };
+    window.addEventListener("beforeunload", handleWindowClose);
+    router.events.on("routeChangeStart", handleBrowseAway);
+    return () => {
+      window.removeEventListener("beforeunload", handleWindowClose);
+      router.events.off("routeChangeStart", handleBrowseAway);
+    };
+
+    // cry about it
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [unsavedChanges]);
+
+  //////////
   const dialogBox = useRef(null);
 
   useEffect(() => {
@@ -75,6 +150,7 @@ export default function Proof({ data, id }) {
             "Welcome to the Editor!\nMath goes in double dollar signs, like this: \n$$ \\sqrt{5} \\not\\in C $$\nEdit this row to see how that math is formatted, or take a look at the Editor Help below.",
           justification: "given",
           id: randomId(),
+          references: [],
         },
       ]);
       setFormFeedback("");
@@ -92,7 +168,7 @@ export default function Proof({ data, id }) {
     );
   }
 
-  if (loading) {
+  if (sessionStatus === "loading") {
     return (
       <MainLayout>
         <Fullbox>
@@ -103,45 +179,56 @@ export default function Proof({ data, id }) {
     );
   }
 
-  if (!loading && !authUser) {
-    return (
-      <MainLayout>
-        <Fullbox>
-          <p className={styles["display-text"]}>Oops</p>
-          <p>You must be signed in to use the editor.</p>
-        </Fullbox>
-      </MainLayout>
-    );
+  if (id && data.uid !== session.user.id) {
+    if (!session.user.admin) {
+      return (
+        <MainLayout>
+          <Fullbox>
+            <p className={styles["display-text"]}>Oops!</p>
+            <p>You cannot view proofs you did not make.</p>
+          </Fullbox>
+        </MainLayout>
+      );
+    }
   }
 
-  // if (id && data.uid !== authUser.uid) {
-  //   if (!process.env.NEXT_PUBLIC_ADMINS.includes(authUser.uid)) {
-  //     return (
-  //       <MainLayout>
-  //         <Fullbox>
-  //           <p className={styles["display-text"]}>Oops!</p>
-  //           <p>You cannot view proofs you did not make.</p>
-  //         </Fullbox>
-  //       </MainLayout>
-  //     );
-  //   }
-  // }
-
-  const editMode = data.proof.length > 0;
+  const editMode = data.rows.length > 0;
 
   function addNewRow() {
     setRows((prevRows) => {
-      return [...prevRows, { claim: "", justification: "given", id: randomId() }];
+      return [...prevRows, { claim: "", justification: "given", id: randomId(), references: [] }];
     });
   }
 
-  function editProof(id, claim, justification) {
+  function editClaim(id, claim) {
     setRows((prevRows) => {
       // find the row with the given id
       const row = prevRows.find((row) => row.id === id);
-      // replace the claim and justification
+      // replace the claim
       row.claim = claim;
+      // edit prevRows to include the new row
+      return [...prevRows];
+    });
+  }
+
+  function editJustification(id, justification) {
+    setRows((prevRows) => {
+      // find the row with the given id
+      const row = prevRows.find((row) => row.id === id);
+      // replace the justification
       row.justification = justification;
+      row.references = [];
+      // edit prevRows to include the new row
+      return [...prevRows];
+    });
+  }
+
+  function editReference(id, reference, index) {
+    setRows((prevRows) => {
+      // find the row with the given id
+      const row = prevRows.find((row) => row.id === id);
+      // replace the justification
+      row.references[index] = reference;
       // edit prevRows to include the new row
       return [...prevRows];
     });
@@ -156,6 +243,7 @@ export default function Proof({ data, id }) {
 
   async function submitNewProof() {
     setIsUpdating(true);
+    setUnsavedChanges(false);
 
     if (rows.length < 2) {
       setIsUpdating(false);
@@ -164,14 +252,8 @@ export default function Proof({ data, id }) {
     }
 
     setFormFeedback("Submitting new proof...");
-    const firebaseToken = await getIdToken();
-    if (!firebaseToken) {
-      setIsUpdating(false);
-      setFormFeedback("You must be logged in to submit a proof.");
-      return;
-    }
 
-    authFetcher("/api/proofs", firebaseToken, {
+    fetcher("/api/proofs", {
       method: "POST",
       body: JSON.stringify({ rows }),
     })
@@ -181,10 +263,12 @@ export default function Proof({ data, id }) {
         setFormFeedback(<span className="info">Proof submitted. It must be approved before it shows up in the library.</span>);
         router.push("/proof/editor?id=" + newData.id).then(() => {
           setIsUpdating(false);
+          setUnsavedChanges(true);
         });
       })
       .catch((err) => {
         setIsUpdating(false);
+        setUnsavedChanges(true);
 
         setFormFeedback(<span className="error">Sorry, could not submit new proof. {err.info.message}</span>);
       });
@@ -201,14 +285,9 @@ export default function Proof({ data, id }) {
     }
 
     setFormFeedback("Submitting edited proof...");
-    const firebaseToken = await getIdToken();
-    if (!firebaseToken) {
-      setIsUpdating(false);
-      setFormFeedback("You must be logged in to submit a proof.");
-      return;
-    }
-    console.log("SUBMITING EDITED PROOF", rows, firebaseToken);
-    authFetcher("/api/proofs/" + id, firebaseToken, {
+
+    console.log("SUBMITING EDITED PROOF", rows);
+    fetcher("/api/proofs/" + id, {
       method: "PUT",
       body: JSON.stringify({ rows }),
     })
@@ -229,13 +308,8 @@ export default function Proof({ data, id }) {
 
   async function deleteProof() {
     setIsUpdating(true);
-    const firebaseToken = await getIdToken();
-    if (!firebaseToken) {
-      setIsUpdating(false);
-      setFormFeedback("You must be logged in to submit a proof.");
-      return;
-    }
-    authFetcher("/api/proofs/" + id, firebaseToken, {
+
+    fetcher("/api/proofs/" + id, {
       method: "DELETE",
     })
       .then(() => {
@@ -253,13 +327,8 @@ export default function Proof({ data, id }) {
 
   async function postProofStatus(bool) {
     setIsUpdating(true);
-    const firebaseToken = await getIdToken();
-    if (!firebaseToken) {
-      setIsUpdating(false);
-      setFormFeedback("You must be logged in to submit a proof.");
-      return;
-    }
-    authFetcher("/api/teacher/status/" + id, firebaseToken, {
+
+    fetcher("/api/teacher/status/" + id, {
       method: "POST",
       body: JSON.stringify({ approved: bool }),
     })
@@ -275,13 +344,9 @@ export default function Proof({ data, id }) {
       })
       .catch((err) => {
         setIsUpdating(false);
-        setFormFeedback(<span className="error">Sorry, got an error trying to set peoof status. {err.info.message}</span>);
+        setFormFeedback(<span className="error">Sorry, got an error trying to set proof status. {err.info.message}</span>);
       });
   }
-
-  // if (!router.query.id) {
-  //   return <div>No proof id</div>;
-  // }
 
   return (
     <MainLayout>
@@ -298,7 +363,10 @@ export default function Proof({ data, id }) {
               rowNum={index}
               initialClaimText={row.claim}
               justification={row.justification}
-              editProof={editProof}
+              references={row.references}
+              editJustification={editJustification}
+              editClaim={editClaim}
+              editReference={editReference}
               deleteRow={deleteRow}
             />
           );
@@ -327,12 +395,12 @@ export default function Proof({ data, id }) {
             </dialog>
           </>
         )}
-        {id && authUser.admin && !proofStatus && (
+        {id && session.user.admin && !proofStatus && (
           <Button type="green" onClick={() => postProofStatus(true)} disabled={isUpdating}>
             Approve
           </Button>
         )}
-        {id && authUser.admin && proofStatus && (
+        {id && session.user.admin && proofStatus && (
           <Button type="red" onClick={() => postProofStatus(false)} disabled={isUpdating}>
             Withdraw
           </Button>
@@ -376,7 +444,7 @@ export default function Proof({ data, id }) {
 export async function getServerSideProps(context) {
   try {
     if (!context.query.id) {
-      return { props: { data: { proof: [] } } };
+      return { props: { data: { rows: [] } } };
     }
 
     const { req } = context;
@@ -384,13 +452,20 @@ export async function getServerSideProps(context) {
     const protocol = req.headers["x-forwarded-proto"] || "http";
     const baseUrl = req ? `${protocol}://${req.headers.host}` : "";
     // Fetch data from external API
-    const data = await fetcher(baseUrl + "/api/proofs/" + context.query.id);
+    let data = await getProof(context.query.id);
+    if (!data) {
+      throw new Error("That proof does not exist.");
+    }
+    if (data.failed) {
+      throw new Error(data.message);
+    }
+    data = JSON.parse(JSON.stringify(data));
     // const data = context.query.id ?? null;
 
     // Pass data to the page via props
     return { props: { data, id: context.query.id } };
   } catch (error) {
-    console.log(error);
-    return { props: { data: { error: { message: error?.info?.error ?? error.message, status: error.status } } } };
+    console.log("====EDITORSERVERR", error);
+    return { props: { data: { error: { message: error.message } } } };
   }
 }
