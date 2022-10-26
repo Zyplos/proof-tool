@@ -12,7 +12,7 @@ export default function Navbar() {
   return (
     <div className={styles.navbar}>
       <NavLink href="https://forms.gle/KXumt5XSuZjufvon9" style={{ backgroundColor: "rgb(170, 5, 148)" }} target="_blank">
-        🕷️ Report Bug
+        🕷 Report Bug
       </NavLink>
     </div>
   );

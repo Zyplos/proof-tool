@@ -3,9 +3,7 @@ import { validJustifications, justificationReferenceNumbers } from "./utils";
 import { unstable_getServerSession } from "next-auth/next";
 import { authOptions } from "../pages/api/auth/[...nextauth]";
 
-function isBlank(str) {
-  return !str || /^\s*$/.test(str);
-}
+import { isBlank } from "./utils";
 
 export async function getServerSession(req, res) {
   try {

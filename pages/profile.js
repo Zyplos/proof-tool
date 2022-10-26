@@ -79,7 +79,7 @@ export default function YourProofs() {
         {data.created.map((proof) => {
           return (
             <Card key={proof.id} footer={<LinkedButton href={`/proof/editor?id=${proof.id}`}>Edit</LinkedButton>}>
-              <MarkdownRenderer content={proof.first_entry.claim} />
+              <MarkdownRenderer content={proof.first_entry} />
             </Card>
           );
         })}
@@ -95,7 +95,7 @@ export default function YourProofs() {
         {data.solved.map((proof) => {
           return (
             <Card key={proof.id} footer={<LinkedButton href={`/proof/solve/${proof.id}`}>Solve Again</LinkedButton>}>
-              <MarkdownRenderer content={proof.first_entry.claim} />
+              <MarkdownRenderer content={proof.first_entry} />
             </Card>
           );
         })}

@@ -308,6 +308,7 @@ export default function Proof({ data, id }) {
 
   async function deleteProof() {
     setIsUpdating(true);
+    setUnsavedChanges(false);
 
     fetcher("/api/proofs/" + id, {
       method: "DELETE",
@@ -317,10 +318,12 @@ export default function Proof({ data, id }) {
         setFormFeedback(<span className="info">Proof deleted.</span>);
         router.push("/profile").then(() => {
           setIsUpdating(false);
+          setUnsavedChanges(true);
         });
       })
       .catch((err) => {
         setIsUpdating(false);
+        setUnsavedChanges(true);
         setFormFeedback(<span className="error">Sorry, could not delete this proof. {err.info.message}</span>);
       });
   }
@@ -379,16 +382,16 @@ export default function Proof({ data, id }) {
         </button>
         {id && editMode && (
           <>
-            <Button type="red" onClick={confirmDeleteProof} disabled={isUpdating}>
+            <Button variant="red" onClick={confirmDeleteProof} disabled={isUpdating}>
               Delete Proof
             </Button>
             <dialog ref={dialogBox} style={{ backgroundColor: "#111", color: "white", border: "none" }}>
               <p>Are you sure you want to delete this proof?</p>
               <div style={{ display: "flex", gap: "16px" }}>
-                <Button type="red" onClick={deleteProof} disabled={isUpdating}>
+                <Button variant="red" onClick={deleteProof} disabled={isUpdating}>
                   Delete Proof
                 </Button>
-                <Button type="gray" onClick={() => dialogBox.current.close()} disabled={isUpdating}>
+                <Button variant="gray" onClick={() => dialogBox.current.close()} disabled={isUpdating}>
                   Cancel
                 </Button>
               </div>
@@ -396,12 +399,12 @@ export default function Proof({ data, id }) {
           </>
         )}
         {id && session.user.admin && !proofStatus && (
-          <Button type="green" onClick={() => postProofStatus(true)} disabled={isUpdating}>
+          <Button variant="green" onClick={() => postProofStatus(true)} disabled={isUpdating}>
             Approve
           </Button>
         )}
         {id && session.user.admin && proofStatus && (
-          <Button type="red" onClick={() => postProofStatus(false)} disabled={isUpdating}>
+          <Button variant="red" onClick={() => postProofStatus(false)} disabled={isUpdating}>
             Withdraw
           </Button>
         )}

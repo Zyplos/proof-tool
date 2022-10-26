@@ -55,7 +55,7 @@ export default function ApprovalsIndex() {
         {data.map((proof) => {
           return (
             <Card key={proof.id} footer={<LinkedButton href={`/proof/editor?id=${proof.id}`}>View</LinkedButton>}>
-              <MarkdownRenderer content={proof.first_entry.claim} />
+              <MarkdownRenderer content={proof.first_entry} />
             </Card>
           );
         })}

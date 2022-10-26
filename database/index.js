@@ -6,7 +6,7 @@ import { BSONTypeError } from "bson";
 async function formatProofPreview(queryResult) {
   let output = [];
   await queryResult.forEach((doc) => {
-    output.push({ id: doc._id, first_entry: doc.rows[0] });
+    output.push({ id: doc._id, first_entry: doc.rows[0].claim, last_entry: doc.rows[doc.rows.length - 1].claim });
   });
   return output;
 }

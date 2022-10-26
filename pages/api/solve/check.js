@@ -50,6 +50,7 @@ export default async function proofObtainHandler(req, res) {
           continue;
         }
 
+        // error checking reference rows
         for (let ir = 0; ir < checkRow.references.length; ir++) {
           const currentReference = checkRow.references[ir];
           if (!currentReference) {
@@ -64,10 +65,18 @@ export default async function proofObtainHandler(req, res) {
             checkResult[checkRow.id] = { feedback: `Reference ${ir + 1} references an invalid row.` };
             continue;
           }
-          if (checkRow.references[ir] !== correctRow.references[ir]) {
-            checkResult[checkRow.id] = { feedback: `Reference ${ir + 1} is incorrect.` };
-            continue;
-          }
+        }
+
+        // references point to valid rows
+        // check if theyre actually correct
+        // order does not matter (ex reference 1 and 2 == reference 2 and 1)
+        // https://stackoverflow.com/a/44827922
+        let a = new Set(checkRow.references);
+        let b = new Set(correctRow.references);
+        const areSetsEqual = a.size === b.size && [...a].every((value) => b.has(value));
+        console.log(a, b, areSetsEqual);
+        if (!areSetsEqual) {
+          checkResult[checkRow.id] = { feedback: `References are incorrect.` };
         }
       }
     }

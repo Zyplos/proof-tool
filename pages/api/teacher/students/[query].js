@@ -2,6 +2,7 @@ import { getProofs, getUserCreatedProofs, getUserProfile } from "../../../../dat
 import { getServerSession } from "../../../../internals/apiUtils";
 
 export default async function handler(req, res) {
+  // query is the user's email
   const { query } = req.query;
   if (!query) return res.status(400).json({ message: "No query provided" });
 
@@ -18,16 +19,6 @@ export default async function handler(req, res) {
     if (userProfile.failed) {
       return res.status(400).json({ message: userProfile.message });
     }
-    // console.log("=======QUERYDEV", userProfile);
-    // const solvedProofs = await getProofs(userProfile.solvedIds.map((e) => ObjectId(e)));
-    // if (solvedProofs.failed) {
-    //   return res.status(400).json({ message: solvedProofs.message });
-    // }
-
-    // const createdProofs = await getUserCreatedProofs(userProfile._id.toString());
-    // if (createdProofs.failed) {
-    //   return res.status(400).json({ message: createdProofs.message });
-    // }
 
     res.status(200).json(userProfile);
   } else {

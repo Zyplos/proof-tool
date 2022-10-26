@@ -32,13 +32,25 @@ export default async function proofObtainHandler(req, res) {
       }
     });
 
+    console.log("SOLVEPROOF INIT", proofData.rows);
+
     // somehow, no rows were randomly changed, so we manually change at least one
     if (!changecheck) {
       // get all rows without "given" justification
       const rows = proofData.rows.filter((row) => row.justification !== "given");
-      if (rows.length > 0) rows[Math.floor(Math.random() * rows.length)].justification = "unknown";
-      proofData.rows = rows;
+      if (rows.length > 0) {
+        const idgrab = rows[Math.floor(Math.random() * rows.length)].id;
+        for (let v = 0; v < proofData.rows.length; v++) {
+          if (proofData.rows[v].id == idgrab) {
+            proofData.rows[v].justification = "unknown";
+            proofData.rows[v].references = [];
+            break;
+          }
+        }
+      }
     }
+
+    console.log("SOLVEPROOF EDITED FINAL", proofData.rows);
 
     ////////
 

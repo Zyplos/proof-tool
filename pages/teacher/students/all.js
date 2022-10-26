@@ -40,7 +40,7 @@ function UserCard(user) {
               console.log("MAPPING ID", proof);
               return (
                 <Card key={proof.id} footer={<LinkedButton href={`/proof/editor?id=${proof.id}`}>Edit</LinkedButton>}>
-                  <MarkdownRenderer content={proof.first_entry.claim} />
+                  <MarkdownRenderer content={proof.first_entry} />
                 </Card>
               );
             })}
@@ -58,7 +58,7 @@ function UserCard(user) {
               console.log("MAPPING ID", proof);
               return (
                 <Card key={proof.id} footer={<LinkedButton href={`/proof/editor?id=${proof.id}`}>Edit</LinkedButton>}>
-                  <MarkdownRenderer content={proof.first_entry.claim} />
+                  <MarkdownRenderer content={proof.first_entry} />
                 </Card>
               );
             })}
@@ -78,47 +78,6 @@ export default function ApprovalsIndex() {
   });
 
   const { data, error } = useSWR("/api/teacher/students");
-  // const { getIdToken, authUser, loading } = useAuth();
-  // const [idToken, setIdToken] = useState(null);
-
-  // const { data, error, size, mutate, setSize, isValidating } = useSWRInfinite(
-  //   (pageIndex, previousPageData) => {
-  //     console.log("-------------DEVCALLER GETKEY", pageIndex, previousPageData?.pageToken);
-
-  //     // reached the end
-  //     if (previousPageData && (!previousPageData.pageToken || !previousPageData.users)) return null;
-
-  //     // first page, we don't have `previousPageData`
-  //     if (pageIndex === 0) return idToken ? [`/api/teacher/students`, idToken] : null;
-
-  //     // add the cursor to the API endpoint
-  //     return `/api/teacher/students?cursor=${previousPageData?.pageToken}`;
-  //   },
-  //   fetcher,
-  //   { revalidateAll: true }
-  // );
-
-  // useEffect to asyncronously getIdToken
-  // useEffect(() => {
-  //   async function grabToken() {
-  //     const token = await getIdToken();
-  //     console.log("-------------GRABTOKEN", token);
-  //     setIdToken(token);
-  //   }
-
-  //   grabToken();
-  // }, [getIdToken]);
-
-  // if (sessionStatus === "loading") {
-  //   return (
-  //     <MainLayout>
-  //       <Fullbox>
-  //         <Loader width="128px" height="128px" />
-  //         Checking user...
-  //       </Fullbox>
-  //     </MainLayout>
-  //   );
-  // }
 
   if (error) {
     return (
@@ -143,8 +102,6 @@ export default function ApprovalsIndex() {
   }
 
   console.log("----------STUDENT PAGE DATA", data);
-
-  // const noMoreUsers = !data[data.length - 1].users || !data[data.length - 1].pageToken;
 
   return (
     <MainLayout>

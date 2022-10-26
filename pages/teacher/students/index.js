@@ -49,7 +49,10 @@ export default function ApprovalsIndex() {
     <MainLayout>
       <div className={styles["flex-header"]}>
         <Heading>Student Search</Heading>
-        <LinkedButton href="/teacher/students/all">View All</LinkedButton>
+        <div style={{ display: "flex", gap: "12px" }}>
+          <LinkedButton href="/teacher/students/imports">Import Students</LinkedButton>
+          <LinkedButton href="/teacher/students/all">View All</LinkedButton>
+        </div>
       </div>
 
       <form onSubmit={handleSubmit} style={{ marginBottom: "32px" }}>
@@ -83,7 +86,7 @@ export default function ApprovalsIndex() {
                 console.log("MAPPING ID", proof);
                 return (
                   <Card key={proof.id} footer={<LinkedButton href={`/proof/editor?id=${proof.id}`}>Edit</LinkedButton>}>
-                    <MarkdownRenderer content={proof.first_entry.claim} />
+                    <MarkdownRenderer content={proof.first_entry} />
                   </Card>
                 );
               })}
@@ -103,7 +106,7 @@ export default function ApprovalsIndex() {
                 console.log("MAPPING ID", proof);
                 return (
                   <Card key={proof.id} footer={<LinkedButton href={`/proof/editor?id=${proof.id}`}>Edit</LinkedButton>}>
-                    <MarkdownRenderer content={proof.first_entry.claim} />
+                    <MarkdownRenderer content={proof.first_entry} />
                   </Card>
                 );
               })}

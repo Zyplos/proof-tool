@@ -5,6 +5,10 @@ export function randomId() {
   return uint32.toString(16);
 }
 
+export function isBlank(str) {
+  return !str || /^\s*$/.test(str);
+}
+
 export const validJustifications = {
   unknown: "???",
   absorption: "Absorption",
@@ -38,16 +42,32 @@ export const validJustifications = {
 };
 
 export const justificationReferenceNumbers = {
-  modusponens: 2,
-  modustollens: 2,
-  hypotheticalsyllogism: 2,
-  disjunctivesyllogism: 2,
+  absorption: 1,
   addition: 1,
-  simplification: 1,
+  algebra: 1,
+  associativity: 1,
+  assumption: 1,
+  commutativity: 1,
   conjunction: 2,
-  resolution: 2,
-  universalinstantiation: 1,
-  universalgeneralization: 1,
+  definition: 1,
+  demorgans: 1,
+  directproofrule: 1,
+  disjunctivesyllogism: 2,
+  distributivity: 1,
+  domination: 1,
+  doublenegation: 1,
   existentialinstantiation: 1,
   existentialgeneralization: 1,
+  given: 0,
+  hypotheticalsyllogism: 2,
+  idempotency: 1,
+  identity: 1,
+  implication: 1,
+  modusponens: 2,
+  modustollens: 2,
+  negation: 1,
+  resolution: 2,
+  simplification: 1,
+  universalinstantiation: 1,
+  universalgeneralization: 1,
 };

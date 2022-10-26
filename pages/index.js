@@ -9,6 +9,7 @@ import { LinkedButton } from "../components/Button";
 import MarkdownRenderer from "../components/MarkdownRenderer";
 import Head from "next/head";
 import { useSession } from "next-auth/react";
+import Divider from "../components/Divider";
 
 function CardFooter({ proofId, authUser }) {
   return (
@@ -67,7 +68,9 @@ export default function Library() {
               footer={<CardFooter authUser={session ?? null} proofId={proof.id} />}
               className={solvedIdsData?.solvedIds?.includes(proof.id) ? styles["green-border"] : ""}
             >
-              <MarkdownRenderer content={proof.first_entry.claim} />
+              <MarkdownRenderer content={proof.first_entry} />
+              <Divider />
+              <MarkdownRenderer content={proof.last_entry} />
             </Card>
           );
         })}
