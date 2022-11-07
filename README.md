@@ -4,7 +4,9 @@ A crowdsourced study tool for making and solving proof-based problems.
 
 Proof Tool is a project made with Professor McCarty for University of Illinois Chicago's CS 151: Mathematical Foundations of Computing class.
 
-This project was built with Next.js, using NextAuth for authenticating users and MongoDB for the database.
+This project was built with Next.js using NextAuth for authenticating users and MongoDB for the database.
+
+![Screenshot of the editor](./assets/screenshot.png)
 
 ## Project Setup
 
