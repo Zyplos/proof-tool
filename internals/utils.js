@@ -5,8 +5,20 @@ export function randomId() {
   return uint32.toString(16);
 }
 
+// returns true if a a string only contains whitespace (blanks)
+// https://stackoverflow.com/a/3261380
 export function isBlank(str) {
   return !str || /^\s*$/.test(str);
+}
+
+// given a string with comma separated values, returns an array without any blank entries
+export function validListFromString(str) {
+  return str
+    .replace(/\s/g, "")
+    .split(",")
+    .filter((v) => {
+      return !isBlank(v);
+    });
 }
 
 export const validJustifications = {
@@ -54,17 +66,17 @@ export const validJustifications = {
 export const justificationReferenceNumbers = {
   absorption: 1,
   addition: 1,
-  algebra: 1,
+  algebra: 0,
   antireflexive: 1,
   antisymmetric: 1,
   associativity: 1,
-  assumption: 1,
+  assumption: 0,
   cartesianproduct: 1,
   commutativity: 1,
   conjunction: 2,
-  definition: 1,
+  definition: 0,
   demorgans: 1,
-  directproofrule: 1,
+  directproofrule: 0,
   disjunctivesyllogism: 2,
   distributivity: 1,
   domination: 1,
