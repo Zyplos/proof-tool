@@ -11,6 +11,12 @@
   justify-content: right;
 }
 
+@media print {
+  .navbar {
+    display: none;
+  }
+}
+
 .navbar-toggle {
   position: absolute;
   top: 5px;

@@ -89,3 +89,17 @@
     display: flex !important;
   }
 }
+
+@media print {
+  .navtitle a {
+    color: black !important;
+  }
+
+  .navbar-toggle {
+    display: none;
+  }
+
+  .navlinks-section {
+    display: none;
+  }
+}

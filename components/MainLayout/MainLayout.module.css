@@ -13,6 +13,7 @@
   margin-right: auto;
   padding: 0 32px;
   padding-bottom: 128px;
+  width: 100%;
 }
 
 @media screen and (min-width: 800px) {

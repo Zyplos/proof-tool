@@ -37,6 +37,64 @@
   }
 }
 
+@media print {
+  .proof-box {
+    margin: 0;
+    background-color: white !important;
+    color: black !important;
+  }
+
+  .proof-box button {
+    display: none;
+  }
+
+  /* https://stackoverflow.com/questions/16603979/how-to-remove-the-default-arrow-icon-from-a-dropdown-list-select-element */
+  .proof-box select {
+    border: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    text-indent: 1px;
+    text-overflow: "";
+  }
+
+  .toolbox {
+    display: none !important;
+  }
+
+  .flex-header {
+    display: none !important;
+  }
+
+  .proof-separator,
+  .mobile-separator {
+    display: none !important;
+  }
+
+  .editor-help {
+    display: none;
+  }
+
+  .print-separator {
+    display: block !important;
+    width: 100% !important;
+    height: 1px !important;
+    background-color: black !important;
+  }
+
+  .print-help {
+    display: none !important;
+  }
+}
+
+.print-help {
+  display: block;
+}
+
+.print-separator {
+  display: none;
+}
+
 .proof-claim {
   white-space: pre-wrap;
   width: 100%;
@@ -123,6 +181,7 @@
   display: flex;
   gap: 16px;
   align-items: center;
+  flex-wrap: wrap;
 }
 
 .tool-button {

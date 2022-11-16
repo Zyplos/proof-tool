@@ -18,6 +18,7 @@ import MarkdownRenderer from "../../components/MarkdownRenderer";
 
 import { useSession, signIn, signOut } from "next-auth/react";
 import { getProof } from "../../database";
+import Toggle from "../../components/Toggle";
 
 function JustificationReferences({ justification, references, onChange }) {
   function handleChange(e, index) {
@@ -52,7 +53,7 @@ function JustificationReferences({ justification, references, onChange }) {
   );
 }
 
-function JustificationRow({ id, rowNum, initialClaimText, justification, references, editClaim, editJustification, editReference, deleteRow }) {
+function JustificationRow({ id, rowNum, initialClaimText, justification, references, editClaim, editJustification, editReference, deleteRow, printMode }) {
   function setClaimText(newClaim) {
     editClaim(id, newClaim);
   }
@@ -80,9 +81,7 @@ function JustificationRow({ id, rowNum, initialClaimText, justification, referen
         </button>
       </div>
       <div className={styles["proof-claim"]}>
-        {/* <textarea ref={textRef} onChange={onChangeHandler} className="text-area" defaultValue={claim} /> */}
-        {/* <MarkdownRenderer content={claim} /> */}
-        <EditableMarkdown initialContent={initialClaimText} onChange={setClaimText} />
+        {printMode ? <MarkdownRenderer content={initialClaimText} /> : <EditableMarkdown initialContent={initialClaimText} onChange={setClaimText} />}
       </div>
       <div className={styles["proof-separator"]}>∵</div>
       <div>
@@ -90,6 +89,7 @@ function JustificationRow({ id, rowNum, initialClaimText, justification, referen
         <JustificationReferences justification={justification} references={references} onChange={setReference} />
       </div>
       <div className={styles["mobile-separator"]}></div>
+      <hr className={styles["print-separator"]} />
     </>
   );
 }
@@ -110,6 +110,7 @@ export default function Proof({ data, id }) {
   const [proofStatus, setProofStatus] = useState(data.approved);
   const [formFeedback, setFormFeedback] = useState("");
   const [isUpdating, setIsUpdating] = useState(false);
+  const [isPrintMode, setIsPrintMode] = useState(false);
 
   // https://stackoverflow.com/a/73977517
   // quick way to prevent the user from leaving without saving
@@ -192,7 +193,10 @@ export default function Proof({ data, id }) {
     }
   }
 
-  const editMode = data.rows.length > 0;
+  // if theres no id in the url no proof was fetch server side
+  // data rows length will be zero if its a new proof
+  // data rows of any length will mean its an existing proof
+  const isEditingExistingProof = data.rows.length > 0;
 
   function addNewRow() {
     setRows((prevRows) => {
@@ -354,10 +358,10 @@ export default function Proof({ data, id }) {
   return (
     <MainLayout>
       <div className={styles["flex-header"]}>
-        <Heading subtitle={editMode ? "Editing existing proof." : "Creating new proof."}>Editor</Heading>
-        {editMode ? <LinkedButton href="/proof/editor">Create New Proof</LinkedButton> : <LinkedButton href="/profile">Edit Existing Proof</LinkedButton>}
+        <Heading subtitle={isEditingExistingProof ? "Editing existing proof." : "Creating new proof."}>Editor</Heading>
+        {isEditingExistingProof ? <LinkedButton href="/proof/editor">Create New Proof</LinkedButton> : <LinkedButton href="/profile">Edit Existing Proof</LinkedButton>}
       </div>
-      <div className={styles["proof-box"]}>
+      <div className={`${styles["proof-box"]}`}>
         {rows.map((row, index) => {
           return (
             <JustificationRow
@@ -371,16 +375,31 @@ export default function Proof({ data, id }) {
               editClaim={editClaim}
               editReference={editReference}
               deleteRow={deleteRow}
+              printMode={isPrintMode}
             />
           );
         })}
       </div>
-
+      {isPrintMode && (
+        <p className={styles["print-help"]}>
+          Currently in Print Mode. Press CTRL + P to save this proof to a PDF by setting the &quot;destination&quot; to &quot;Save to PDF&quot; in the print prompt.
+          Disable print mode to edit rows.
+        </p>
+      )}
       <div className={styles["toolbox"]}>
-        <button className={`${styles["tool-button"]} ${styles["button-gray"]}`} onClick={addNewRow} disabled={isUpdating}>
-          + New Row
-        </button>
-        {id && editMode && (
+        {!isPrintMode && (
+          <button className={`${styles["tool-button"]} ${styles["button-gray"]}`} onClick={addNewRow} disabled={isUpdating}>
+            + New Row
+          </button>
+        )}
+        {isPrintMode && (
+          <Button onClick={() => window.print()} disabled={isUpdating}>
+            Print to PDF
+          </Button>
+        )}
+        <Toggle labelText={"Print Mode"} isChecked={isPrintMode} handleToggle={() => setIsPrintMode(!isPrintMode)} />
+
+        {id && isEditingExistingProof && (
           <>
             <Button variant="red" onClick={confirmDeleteProof} disabled={isUpdating}>
               Delete Proof
@@ -410,12 +429,16 @@ export default function Proof({ data, id }) {
         )}
         {id && !proofStatus && <span>Pending professor approval.</span>}
         {/* <span className={styles["end-of-proof"]}>∎</span> */}
-        <button className={`${styles["tool-button"]} ${styles["button-green"]}`} onClick={editMode ? submitEditedProof : submitNewProof} disabled={isUpdating}>
+        <button
+          className={`${styles["tool-button"]} ${styles["button-green"]}`}
+          onClick={isEditingExistingProof ? submitEditedProof : submitNewProof}
+          disabled={isUpdating}
+        >
           ∎ Submit
         </button>
       </div>
       <p>{formFeedback}</p>
-      <details style={{ backgroundColor: "#111", padding: "32px" }}>
+      <details style={{ backgroundColor: "#111", padding: "32px" }} className={styles["editor-help"]}>
         <summary style={{ marginTop: "0px" }}>Editor Help</summary>
         <p>Welcome to the Proof Editor! To get started with a new proof, click the &quot;+ New Row&quot; button.</p>
 

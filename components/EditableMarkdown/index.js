@@ -65,7 +65,7 @@ export default function EditableMarkdown({ initialContent, onChange }) {
   const View = editing ? (
     <>
       <textarea ref={textRef} onChange={onChangeHandler} value={content}></textarea>
-      <div style={{ display: "flex", gap: "5px" }}>
+      <div style={{ display: "flex", gap: "5px" }} className={styles["print-hide"]}>
         <Button
           mini
           onClick={(e) => {
