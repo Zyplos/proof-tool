@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/router";
 import useSWRImmutable from "swr/immutable";
-import { justificationReferenceNumbers, randomId } from "../../internals/utils";
+import { justificationReferenceNumbers, randomId, validEnglishJustifications } from "../../internals/utils";
 
 import Fullbox from "../../components/Fullbox";
 import Loader from "../../components/Loader";
@@ -53,7 +53,7 @@ function JustificationReferences({ justification, references, onChange }) {
   );
 }
 
-function JustificationRow({ id, rowNum, initialClaimText, justification, references, editClaim, editJustification, editReference, deleteRow, printMode }) {
+function JustificationRow({ id, rowNum, initialClaimText, justification, references, editClaim, editJustification, editReference, deleteRow, printMode, proofType }) {
   function setClaimText(newClaim) {
     editClaim(id, newClaim);
   }
@@ -85,7 +85,7 @@ function JustificationRow({ id, rowNum, initialClaimText, justification, referen
       </div>
       <div className={styles["proof-separator"]}>∵</div>
       <div>
-        <JustificationDropdown initialValue={justification} onChange={setJustification} />
+        <JustificationDropdown initialValue={justification} onChange={setJustification} proofType={proofType} />
         <JustificationReferences justification={justification} references={references} onChange={setReference} />
       </div>
       <div className={styles["mobile-separator"]}></div>
@@ -111,6 +111,7 @@ export default function Proof({ data, id }) {
   const [formFeedback, setFormFeedback] = useState("");
   const [isUpdating, setIsUpdating] = useState(false);
   const [isPrintMode, setIsPrintMode] = useState(false);
+  const [proofType, setProofType] = useState(data.proofType ?? "default");
 
   // https://stackoverflow.com/a/73977517
   // quick way to prevent the user from leaving without saving
@@ -238,6 +239,34 @@ export default function Proof({ data, id }) {
     });
   }
 
+  function handleProofTypeChange(proofType) {
+    // clean up justifications that the mode doesnt use
+    if (proofType == "english") {
+      setRows((prevRows) => {
+        // find the row with the given id
+        for (let index = 0; index < prevRows.length; index++) {
+          const row = prevRows[index];
+
+          console.log("=========HANDLEPROOF ROW NOMOD", row);
+
+          if (!Object.keys(validEnglishJustifications).includes(row.justification)) {
+            console.log("===GOT ONE, CHANGE]]]]]]]]]]", row);
+            row.justification = "given"; // default
+            row.references = [];
+          }
+
+          console.log("=======HANDLEPROOFCHANGE MODDED CHANGED", row);
+        }
+
+        console.log("=======HANDLEPROOFCHANGE LOG FINAL=", prevRows);
+
+        return [...prevRows];
+      });
+    }
+
+    setProofType(proofType);
+  }
+
   function deleteRow(index) {
     setRows((prevRows) => {
       console.log("DELETEROW", index, prevRows);
@@ -259,7 +288,7 @@ export default function Proof({ data, id }) {
 
     fetcher("/api/proofs", {
       method: "POST",
-      body: JSON.stringify({ rows }),
+      body: JSON.stringify({ rows, proofType }),
     })
       .then((newData) => {
         // console.log(newData);
@@ -293,7 +322,7 @@ export default function Proof({ data, id }) {
     console.log("SUBMITING EDITED PROOF", rows);
     fetcher("/api/proofs/" + id, {
       method: "PUT",
-      body: JSON.stringify({ rows }),
+      body: JSON.stringify({ rows, proofType }),
     })
       .then(() => {
         // mutate({ ...data, proof: rows });
@@ -376,6 +405,7 @@ export default function Proof({ data, id }) {
               editReference={editReference}
               deleteRow={deleteRow}
               printMode={isPrintMode}
+              proofType={proofType}
             />
           );
         })}
@@ -398,6 +428,18 @@ export default function Proof({ data, id }) {
           </Button>
         )}
         <Toggle labelText={"Print Mode"} isChecked={isPrintMode} handleToggle={() => setIsPrintMode(!isPrintMode)} />
+
+        <div>
+          <label htmlFor="editor-mode-select" className={styles["dropdown-label"]}>
+            Proof Type
+          </label>
+
+          <select name="editor-mode-select" value={proofType} className={styles.dropdown} onChange={(e) => handleProofTypeChange(e.target.value)}>
+            <option value="default">Default</option>
+            <option value="english">English</option>
+            {/* <option value="induction">Induction</option> */}
+          </select>
+        </div>
 
         {id && isEditingExistingProof && (
           <>

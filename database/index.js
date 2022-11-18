@@ -140,7 +140,7 @@ export async function getAllPendingProofs() {
   }
 }
 
-export async function insertNewProof(proofRows, uid) {
+export async function insertNewProof(proofRows, proofType, uid) {
   console.log("MONGODB | INSERTNEWPROOF + working", uid, proofRows);
 
   try {
@@ -152,6 +152,7 @@ export async function insertNewProof(proofRows, uid) {
       uid,
       created: new Date(),
       approved: false,
+      proofType,
     });
 
     return insertedId;
@@ -161,7 +162,7 @@ export async function insertNewProof(proofRows, uid) {
   }
 }
 
-export async function updateProof(id, proofRows, uid, isAdmin = false) {
+export async function updateProof(id, proofRows, proofType, uid, isAdmin = false) {
   console.log("MONGODB | UPDATEPROOF + working", id, proofRows);
 
   try {
@@ -187,6 +188,7 @@ export async function updateProof(id, proofRows, uid, isAdmin = false) {
         $set: {
           rows: proofRows,
           updated: new Date(),
+          proofType,
         },
       }
     );

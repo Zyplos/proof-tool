@@ -1,5 +1,5 @@
-import { checkProofRowsFormat, getServerSession } from "../../../internals/apiUtils";
-import { deleteProof, getProof, updateProof } from "../../../database";
+import { getServerSession } from "../../../internals/apiUtils";
+import { deleteProof, getProof } from "../../../database";
 
 export default async function proofObtainHandler(req, res) {
   const { id } = req.query;

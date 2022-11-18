@@ -35,12 +35,12 @@ export default async function proofObtainHandler(req, res) {
 
     // checking if request body is correctly formatted
     const proofData = req.body;
-    const verifyRows = checkProofRowsFormat(proofData.rows);
+    const verifyRows = checkProofRowsFormat(proofData.rows, proofData.proofType);
     if (verifyRows.failed) {
       return res.status(400).json({ message: verifyRows.message });
     }
 
-    const result = await updateProof(id, proofData.rows, session.user.id, session.user.admin);
+    const result = await updateProof(id, proofData.rows, proofData.proofType, session.user.id, session.user.admin);
     if (result.failed) {
       return res.status(400).json({ message: result.message });
     }

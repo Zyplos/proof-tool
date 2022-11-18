@@ -11,6 +11,13 @@ export function isBlank(str) {
   return !str || /^\s*$/.test(str);
 }
 
+// https://stackoverflow.com/questions/196972/convert-string-to-title-case-with-javascript
+export function toTitleCase(str) {
+  return str.replace(/\w\S*/g, function (txt) {
+    return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();
+  });
+}
+
 // given a string with comma separated values, returns an array without any blank entries
 export function validListFromString(str) {
   return str
@@ -62,6 +69,20 @@ export const validJustifications = {
   universalinstantiation: "Universal Instantiation",
   universalgeneralization: "Universal Generalization",
 };
+
+export const validEnglishJustifications = {
+  unknown: "???",
+  identity: "Identity",
+  injective: "Injective",
+  definition: "Definition",
+  implication: "Implication",
+  modusponens: "Modus ponens",
+  modustollens: "Modus tollens",
+  negation: "Negation",
+  powerset: "Powerset",
+  given: "Given (dev)",
+};
+// TODO remember to remove the (dev) once validEnglishJustifications is finalized
 
 export const justificationReferenceNumbers = {
   absorption: 1,

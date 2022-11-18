@@ -17,7 +17,12 @@ export async function getServerSession(req, res) {
   }
 }
 
-export function checkProofRowsFormat(proofRows) {
+export function checkProofRowsFormat(proofRows, proofType) {
+  console.log("====APIUTILS PROOFTYPE CHECK", proofType);
+  if (!["default", "english", "induction"].includes(proofType)) {
+    return { failed: true, message: "Proof type is invalid. (report bug)" };
+  }
+
   if (!proofRows) {
     return { failed: true, message: "No proof rows provided." };
   }

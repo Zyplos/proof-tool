@@ -9,13 +9,13 @@ export default async function handler(req, res) {
       return res.status(500).json({ message: session.message });
     }
 
-    const { rows } = req.body;
-    const verifyRows = checkProofRowsFormat(rows);
+    const { rows, proofType } = req.body;
+    const verifyRows = checkProofRowsFormat(rows, proofType);
     if (verifyRows.failed) {
       return res.status(400).json({ message: verifyRows.message });
     }
 
-    const result = await insertNewProof(rows, session.user.id);
+    const result = await insertNewProof(rows, proofType, session.user.id);
     if (result.failed) {
       return res.status(400).json({ message: result.message });
     }

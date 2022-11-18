@@ -1,9 +1,11 @@
 import { useState } from "react";
 import styles from "./JustificationDropdown.module.css";
-import { validJustifications } from "../../internals/utils";
+import { validEnglishJustifications, validJustifications } from "../../internals/utils";
 
-export default function JustificationDropdown({ initialValue, onChange, includeUnknown = false }) {
+export default function JustificationDropdown({ initialValue, onChange, includeUnknown = false, proofType = "default" }) {
   const [value, setValue] = useState(initialValue ?? (includeUnknown ? "unknown" : "given"));
+
+  const justificationList = proofType == "english" ? validEnglishJustifications : validJustifications;
 
   function handleChange(e) {
     // setValue(e.target.value);
@@ -18,11 +20,11 @@ export default function JustificationDropdown({ initialValue, onChange, includeU
       </label>
 
       <select name="justification-select" value={initialValue} className={styles.dropdown} onChange={handleChange}>
-        {Object.keys(validJustifications).map((value) => {
+        {Object.keys(justificationList).map((value) => {
           if (!includeUnknown && value === "unknown") return null;
           return (
             <option key={value} value={value}>
-              {validJustifications[value]}
+              {justificationList[value]}
             </option>
           );
         })}
