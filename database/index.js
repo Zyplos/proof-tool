@@ -347,6 +347,43 @@ export async function getUserProfile(email) {
   }
 }
 
+export async function getUserProfilesBulk(queryList) {
+  console.log(queryList);
+  try {
+    const database = await connectToDatabase();
+    const collection = database.collection("users");
+
+    const obj_ids = queryList.map(function (uid) {
+      return uid + "@uic.edu";
+    });
+
+    const dbresult = await collection.find({ email: { $in: obj_ids } });
+
+    let users = [];
+    let promises = [];
+    await dbresult.forEach((user) => {
+      console.log("DBRESULT FOREACH", user, user.email);
+      users.push(user);
+      promises.push(getUserProfile(user.email));
+    });
+
+    const results = await Promise.all(promises);
+
+    // merge results and users into one object
+    const merged = results.map((result, i) => {
+      const { email, name } = users[i];
+      if (result.failed) return { ...result, email, name };
+      const { created, solved } = result;
+      return { created, solved, email, name };
+    });
+
+    return { users: merged };
+  } catch (error) {
+    console.error("MongoDB | getUserProfilesBulk error", error);
+    return { failed: true, message: "An uncaught error has occurred trying to get a list of users." };
+  }
+}
+
 // TODO this seems wildly inefficient
 // read all users, solved, and created all at once here instead of making other db connections in each call
 // refer to https://stackoverflow.com/questions/36094865/how-to-do-promise-all-for-array-of-array-of-promises
