@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/router";
 import useSWRImmutable from "swr/immutable";
-import { justificationReferenceNumbers, randomId } from "../../../internals/utils";
+import { isBlank, justificationReferenceNumbers, randomId, toTitleCase } from "../../../internals/utils";
 
 import Fullbox from "../../../components/Fullbox";
 import Loader from "../../../components/Loader";
@@ -17,6 +17,7 @@ import { useSession, signIn, signOut } from "next-auth/react";
 
 import Link from "next/link";
 import JustificationDropdown from "../../../components/JustificationDropdown";
+import Heading from "../../../components/Heading";
 
 function JustificationReferences({ justification, references, onChange }) {
   function handleChange(e, index) {
@@ -51,7 +52,22 @@ function JustificationReferences({ justification, references, onChange }) {
   );
 }
 
-function JustificationRow({ id, rowNum, initialClaimText, justification, references, editClaim, editJustification, editReference, deleteRow, isIncorrect, feedback }) {
+function JustificationRow({
+  id,
+  rowNum,
+  initialClaimText,
+  justification,
+  references,
+  editClaim,
+  editJustification,
+  editReference,
+  deleteRow,
+  isIncorrect,
+  feedback,
+  proofType,
+  isClaimMissing,
+  claimFeedback,
+}) {
   function setClaimText(newClaim) {
     editClaim(id, newClaim);
   }
@@ -65,19 +81,54 @@ function JustificationRow({ id, rowNum, initialClaimText, justification, referen
     editReference(id, newReference, index);
   }
 
+  console.log("====INITBLANKDEV", initialClaimText, isBlank(initialClaimText));
+
   return (
     <>
-      <div className={styles["proof-index"]} style={{ backgroundColor: isIncorrect ? "red" : "green", color: "white", padding: "5px 5px" }}>
+      <div
+        className={styles["proof-index"]}
+        style={{
+          backgroundColor: proofType == "default" ? (isIncorrect ? "red" : "green") : "none",
+          ...(proofType == "default" && { color: "white" }), // only add this property if proofType is default
+          padding: "5px 5px",
+        }}
+      >
         {rowNum + 1}{" "}
       </div>
       <div className={styles["proof-claim"]}>
         {/* <textarea ref={textRef} onChange={onChangeHandler} className="text-area" defaultValue={claim} /> */}
         {/* <MarkdownRenderer content={claim} /> */}
-        <MarkdownRenderer content={initialClaimText} />
+
+        <div
+          style={{
+            ...(isClaimMissing && claimFeedback && { backgroundColor: "#111", padding: "12px" }),
+          }}
+        >
+          {isClaimMissing && <p>Your answer:</p>}
+
+          <div
+            style={{
+              ...(isClaimMissing && !claimFeedback && { border: "2px solid red" }),
+            }}
+          >
+            {isClaimMissing ? (
+              <EditableMarkdown initialContent={isBlank(initialClaimText) ? "???" : initialClaimText} onChange={setClaimText} />
+            ) : (
+              <MarkdownRenderer content={initialClaimText} />
+            )}
+          </div>
+        </div>
+
+        {claimFeedback && (
+          <div style={{ backgroundColor: "green", marginTop: "16px", padding: "12px" }}>
+            <p>Correct:</p>
+            <MarkdownRenderer content={claimFeedback} />
+          </div>
+        )}
       </div>
       <div className={styles["proof-separator"]}>∵</div>
       <div className={justification === "unknown" ? styles["highlight-cell"] : ""}>
-        <JustificationDropdown initialValue={justification} onChange={setJustification} includeUnknown={true} />
+        <JustificationDropdown initialValue={justification} onChange={setJustification} includeUnknown={true} proofType={proofType} />
         <JustificationReferences justification={justification} references={references} onChange={setReference} />
 
         {feedback && <p style={{ backgroundColor: "red" }}>{feedback}</p>}
@@ -106,22 +157,24 @@ export default function Proof() {
   useEffect(() => {
     let changecheck = false;
     if (data) {
-      data.rows.forEach((rowchange, i) => {
-        if (rowchange.justification === "given") return;
-        // calculate a chance of changing the justification
-        if (Math.random() < 0.35) {
-          rowchange.justification = "unknown";
-          changecheck = true;
-        }
-      });
+      // data.rows.forEach((rowchange, i) => {
+      //   if (rowchange.justification === "given") return;
+      //   // calculate a chance of changing the justification
+      //   if (Math.random() < 0.35) {
+      //     rowchange.justification = "unknown";
+      //     changecheck = true;
+      //   }
+      // });
 
-      // somehow, no rows were randomly changed, so we manually change at least one
-      if (!changecheck) {
-        // get all rows without "given" justification
-        const rows = data.rows.filter((row) => row.justification !== "given");
-        if (rows.length > 0) rows[Math.floor(Math.random() * rows.length)].justification = "unknown";
-      }
+      // // somehow, no rows were randomly changed, so we manually change at least one
+      // if (!changecheck) {
+      //   // get all rows without "given" justification
+      //   const rows = data.rows.filter((row) => row.justification !== "given");
+      //   if (rows.length > 0) rows[Math.floor(Math.random() * rows.length)].justification = "unknown";
+      // }
 
+      // setRows(data.rows);
+      // TODO remove this leftover bit from when random solve logic was clientside
       setRows(data.rows);
     }
   }, [data]);
@@ -221,9 +274,12 @@ export default function Proof() {
       console.log("INCORRECTIDS", incorrectIds);
 
       setRows((prevRows) => {
-        prevRows.forEach((row) => {
+        prevRows.forEach((row, i) => {
           row.incorrect = incorrectIds.includes(row.id);
           row.feedback = result.incorrect[row.id]?.feedback;
+          if (row.claimMissing) {
+            row.claimFeedback = result.englishCheck.rows[i].claim;
+          }
         });
 
         return prevRows;
@@ -239,15 +295,17 @@ export default function Proof() {
       <MainLayout>
         <Fullbox>
           <Loader width="128px" height="128px" />
-          Prepping editor...
+          Prepping solver...
         </Fullbox>
       </MainLayout>
     );
   }
 
+  const rowsHasEmptyClaims = rows.some((row) => isBlank(row.claim));
+
   return (
     <MainLayout>
-      <h1>Solve</h1>
+      <Heading subtitle={data.proofType == "default" ? null : toTitleCase(data.proofType) + " proof."}>Solve</Heading>
 
       <div className={styles["proof-box"]}>
         {rows.map((row, index) => {
@@ -258,6 +316,7 @@ export default function Proof() {
               feedback={row.feedback}
               rowNum={index}
               initialClaimText={row.claim}
+              isClaimMissing={row.claimMissing}
               justification={row.justification}
               references={row.references}
               editJustification={editJustification}
@@ -265,13 +324,15 @@ export default function Proof() {
               editReference={editReference}
               deleteRow={deleteRow}
               isIncorrect={row.incorrect}
+              proofType={data.proofType}
+              claimFeedback={row.claimFeedback}
             />
           );
         })}
       </div>
 
       <div className={styles["toolbox"]}>
-        <button className={`${styles["tool-button"]} ${styles["button-green"]}`} onClick={submitEdits}>
+        <button className={`${styles["tool-button"]} ${styles["button-green"]}`} onClick={submitEdits} disabled={rowsHasEmptyClaims}>
           ∎ Check Answer
         </button>
       </div>

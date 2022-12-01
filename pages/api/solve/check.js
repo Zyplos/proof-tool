@@ -90,7 +90,7 @@ export default async function proofObtainHandler(req, res) {
     }
 
     //   setTimeout(() => {
-    res.status(200).json({ incorrect: checkResult, saveResult });
+    res.status(200).json({ incorrect: checkResult, saveResult, ...(proofData.proofType == "english" && { englishCheck: proofData }) });
     //   }, 2000);
   } else {
     res.status(405).json({ message: "Method not allowed" });

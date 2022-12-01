@@ -412,7 +412,7 @@ export default function Proof({ data, id }) {
       </div>
       {isPrintMode && (
         <p className={styles["print-help"]}>
-          Currently in Print Mode. Press CTRL + P to save this proof to a PDF by setting the &quot;destination&quot; to &quot;Save to PDF&quot; in the print prompt.
+          Currently in Print Mode. Press CTRL + P to save this proof to a PDF by setting the &quot;destination&quot; to &quot;Save as PDF&quot; in the print prompt.
           Disable print mode to edit rows.
         </p>
       )}
@@ -435,7 +435,7 @@ export default function Proof({ data, id }) {
           </label>
 
           <select name="editor-mode-select" value={proofType} className={styles.dropdown} onChange={(e) => handleProofTypeChange(e.target.value)}>
-            <option value="default">Default</option>
+            <option value="default">Numbered Line</option>
             <option value="english">English</option>
             {/* <option value="induction">Induction</option> */}
           </select>

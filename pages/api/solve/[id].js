@@ -22,6 +22,7 @@ export default async function proofObtainHandler(req, res) {
     ///////////
 
     let changecheck = false;
+    let changecheckEnglish = false;
     proofData.rows.forEach((rowchange, i) => {
       rowchange.references = [];
       if (rowchange.justification === "given") return;
@@ -30,10 +31,22 @@ export default async function proofObtainHandler(req, res) {
         rowchange.justification = "unknown";
         changecheck = true;
       }
+
+      // english proofs have a chance of removing the claim as well
+      if (proofData.proofType == "english") {
+        // DONT remove the initial claim or the final claim for english proofs
+        if (i == 0 || i == proofData.rows.length - 1) return;
+        if (Math.random() < 0.35) {
+          rowchange.claim = "";
+          rowchange.claimMissing = true;
+          changecheckEnglish = true;
+        }
+      }
     });
 
     console.log("SOLVEPROOF INIT", proofData.rows);
 
+    // TODO this could be better written
     // somehow, no rows were randomly changed, so we manually change at least one
     if (!changecheck) {
       // get all rows without "given" justification
@@ -44,6 +57,22 @@ export default async function proofObtainHandler(req, res) {
           if (proofData.rows[v].id == idgrab) {
             proofData.rows[v].justification = "unknown";
             proofData.rows[v].references = [];
+            break;
+          }
+        }
+      }
+    }
+
+    if (proofData.proofType == "english" && !changecheckEnglish) {
+      // get all rows without "given" justification
+      // slice the rows array so that we dont take the last claim into consideration (it shouldnt change)
+      const rows = proofData.rows.slice(0, proofData.rows.length - 1).filter((row) => row.justification !== "given");
+      if (rows.length > 0) {
+        const idgrab = rows[Math.floor(Math.random() * rows.length)].id;
+        for (let v = 0; v < proofData.rows.length; v++) {
+          if (proofData.rows[v].id == idgrab) {
+            proofData.rows[v].claim = "";
+            proofData.rows[v].claimMissing = true;
             break;
           }
         }
