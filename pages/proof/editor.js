@@ -241,28 +241,19 @@ export default function Proof({ data, id }) {
 
   function handleProofTypeChange(proofType) {
     // clean up justifications that the mode doesnt use
-    if (proofType == "english") {
-      setRows((prevRows) => {
-        // find the row with the given id
-        for (let index = 0; index < prevRows.length; index++) {
-          const row = prevRows[index];
+    setRows((prevRows) => {
+      // find the row with the given id
+      for (let index = 0; index < prevRows.length; index++) {
+        const row = prevRows[index];
 
-          console.log("=========HANDLEPROOF ROW NOMOD", row);
+        row.justification = "given"; // default
+        row.references = [];
+      }
 
-          if (!Object.keys(validEnglishJustifications).includes(row.justification)) {
-            console.log("===GOT ONE, CHANGE]]]]]]]]]]", row);
-            row.justification = "given"; // default
-            row.references = [];
-          }
+      console.log("=======HANDLEPROOFCHANGE LOG FINAL=", prevRows);
 
-          console.log("=======HANDLEPROOFCHANGE MODDED CHANGED", row);
-        }
-
-        console.log("=======HANDLEPROOFCHANGE LOG FINAL=", prevRows);
-
-        return [...prevRows];
-      });
-    }
+      return [...prevRows];
+    });
 
     setProofType(proofType);
   }

@@ -1,11 +1,11 @@
 import { useState } from "react";
 import styles from "./JustificationDropdown.module.css";
-import { validEnglishJustifications, validJustifications } from "../../internals/utils";
+import { validEnglishJustifications, validNumberLineJustifications } from "../../internals/utils";
 
 export default function JustificationDropdown({ initialValue, onChange, includeUnknown = false, proofType = "default" }) {
   const [value, setValue] = useState(initialValue ?? (includeUnknown ? "unknown" : "given"));
 
-  const justificationList = proofType == "english" ? validEnglishJustifications : validJustifications;
+  const justificationList = proofType == "english" ? validEnglishJustifications : validNumberLineJustifications;
 
   function handleChange(e) {
     // setValue(e.target.value);
