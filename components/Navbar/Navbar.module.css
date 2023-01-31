@@ -102,4 +102,9 @@
   .navlinks-section {
     display: none;
   }
+
+  .navbar {
+    padding-bottom: 0;
+    margin-bottom: 0;
+  }
 }
