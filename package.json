@@ -1,6 +1,6 @@
 {
   "name": "proof-study",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -9,6 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@json2csv/plainjs": "^6.1.2",
     "@next-auth/mongodb-adapter": "^1.1.0",
     "mongodb": "^4.10.0",
     "next": "^12.3.1",

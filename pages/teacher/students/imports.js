@@ -9,23 +9,33 @@ import MarkdownRenderer from "../../../components/MarkdownRenderer";
 import { fetcher } from "../../../internals/fetcher";
 import { isBlank, randomId, validListFromString } from "../../../internals/utils";
 import styles from "../../../styles/Library.module.css";
+import { Parser } from "@json2csv/plainjs";
 
 function UserCard(user) {
   if (user.failed) {
     return (
-      <Card style={{ backgroundColor: "#333333", padding: "32px", marginBottom: "32px" }}>
-        <p>
-          {user.displayName} ({user.email})
-        </p>
-        <p></p>
+      <Card style={{ backgroundColor: "#631d1d", padding: "32px", marginBottom: "32px" }}>
+        <span>
+          {user.name} ({user.email}) • Error trying to get this student.
+        </span>
+      </Card>
+    );
+  }
+
+  if (user.notFound) {
+    return (
+      <Card style={{ backgroundColor: "#631d1d", padding: "32px", marginBottom: "32px" }}>
+        <span>
+          {user.email} • This student was not found.
+        </span>
       </Card>
     );
   }
 
   return (
-    <details style={{ backgroundColor: "#333333", padding: "32px", marginBottom: "32px" }}>
+    <details style={{ backgroundColor: user.notFound ? "#631d1d" : "#333333", padding: "32px", marginBottom: "32px" }}>
       <summary style={{ marginTop: "0px" }}>
-        {user.displayName} ({user.email}) • {user.created.failed ? <span>Error getting created proofs</span> : <span>Created proofs: {user.created.length}</span>} •{" "}
+        {user.name} ({user.email}) • {user.created.failed ? <span>Error getting created proofs</span> : <span>Created proofs: {user.created.length}</span>} •{" "}
         {user.solved.failed ? <span>Error getting solved proofs</span> : <span>Solved proofs: {user.solved.length}</span>}
       </summary>
 
@@ -79,6 +89,7 @@ export default function ImportStudents() {
   const [semester, setSemester] = useState("spring");
   const [year, setYear] = useState(new Date().getFullYear());
   const [studentList, setStudentList] = useState("");
+  const [formFeedback, setFormFeedback] = useState("");
   const dialogBox = useRef(null);
 
   const [queriedData, setQueriedData] = useState({ users: [] });
@@ -90,7 +101,7 @@ export default function ImportStudents() {
 
   async function queryData() {
     console.log("SUBMITTING DEV FORM");
-    // setFormFeedback("Submitting...");
+    setFormFeedback("Submitting...");
 
     try {
       const result = await fetcher("/api/teacher/students/bulk", {
@@ -100,9 +111,58 @@ export default function ImportStudents() {
       console.log("CHECKSUBMIT", result);
       dialogBox.current.close();
       setQueriedData(result);
+      setFormFeedback(`Got ${result.users.filter((user) => !user.notFound).length} students.`);
     } catch (error) {
       console.log("ERROR SUBMITTING PROOF", error);
-      // setFormFeedback(<span className="error">Sorry, got an error. {error.info.message}</span>);
+      setFormFeedback(<span className="error">Sorry, got an error. {error.info.message}</span>);
+    }
+  }
+
+  function downloadCSVData() {
+    console.log("DOWNLOADING CSV");
+    const csvFriendlyData = queriedData.users.map(({ email, created, solved, name, notFound, failed }) => {
+      if (failed) {
+        return {
+          name,
+          email,
+          created: "FAILED_TO_GET",
+          solved: "FAILED_TO_GET",
+          notFound: "ERROR_GETTING_STUDENT",
+        };
+      } else {
+        return {
+          name,
+          email,
+          created: created.failed ? "FAILED_TO_GET" : created.length,
+          solved: solved.failed ? "FAILED_TO_GET" : solved.length,
+          notFound: notFound ? "STUDENT_NOT_FOUND" : "",
+        };
+      }
+    });
+
+    try {
+      setFormFeedback("Converting to CSV download...");
+      const opts = {};
+      const parser = new Parser(opts);
+      const csv = parser.parse(csvFriendlyData);
+      console.log(csv);
+      // const csvContent = "data:text/csv;charset=utf-8," + csv;
+      // const encodedUri = encodeURI(csvContent);
+      // window.open(encodedUri);
+
+      // https://stackoverflow.com/a/55584453
+      const link = document.createElement("a");
+      link.setAttribute("href", "data:text/csv;charset=utf-8," + encodeURIComponent(csv));
+      link.setAttribute("download", "proof_students_export.csv");
+      link.style.visibility = "hidden";
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      setFormFeedback("Exported student data to CSV.");
+    } catch (err) {
+      console.error(err);
+      setFormFeedback("Sorry, got an error trying to convert student data to a CSV download.");
     }
   }
 
@@ -118,11 +178,14 @@ export default function ImportStudents() {
         required
       ></textarea>
 
-      <div style={{ display: "flex", marginBottom: "16px" }}>
+      <div style={{ display: "flex", marginBottom: "16px", gap: "16px" }}>
         <Button variant="green" onClick={showConfirmModal}>
           Submit
         </Button>
+        {queriedData?.users.length > 0 && <Button onClick={downloadCSVData}>Download CSV</Button>}
       </div>
+
+      <p>{formFeedback}</p>
 
       {queriedData.users.map((user) => {
         return UserCard(user);

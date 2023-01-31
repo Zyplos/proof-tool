@@ -377,7 +377,10 @@ export async function getUserProfilesBulk(queryList) {
       return { created, solved, email, name };
     });
 
-    return { users: merged };
+    const usersNotFound = queryList.filter((netid) => !users.some((user) => netid + "@uic.edu" == user.email));
+    const mappedUsersNotFound = usersNotFound.map((netid) => ({ email: netid + "@uic.edu", created: [], solved: [], name: "???", notFound: true }));
+
+    return { users: [...merged, ...mappedUsersNotFound] };
   } catch (error) {
     console.error("MongoDB | getUserProfilesBulk error", error);
     return { failed: true, message: "An uncaught error has occurred trying to get a list of users." };
