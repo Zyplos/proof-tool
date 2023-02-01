@@ -1,10 +1,10 @@
 .card {
-  padding: 48px;
-  background-color: #111;
+  padding: var(--space-xl);
+  background-color: var(--c-overlay);
 }
 
 .card-footer {
-  margin-top: 48px;
+  margin-top: var(--space-xl);
   display: flex;
-  gap: 16px;
+  gap: var(--space-m);
 }

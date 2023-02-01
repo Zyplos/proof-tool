@@ -4,8 +4,9 @@ import Loader from "../Loader";
 import NavLink from "../NavLink";
 export default function SessionBox() {
   const { data: session, status } = useSession();
+  console.log("SESSIONBOX,", status);
   if (status == "loading") {
-    <Loader />;
+    return <Loader />;
   }
   if (session) {
     return (

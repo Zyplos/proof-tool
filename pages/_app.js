@@ -1,4 +1,4 @@
-import "../styles/globals.css";
+import "../styles/globals-v2.css";
 import { SWRConfig } from "swr";
 import { fetcher } from "../internals/fetcher";
 import { SessionProvider } from "next-auth/react";

@@ -61,7 +61,7 @@ export default function YourProofs() {
     <MainLayout>
       <div className={styles["flex-header"]}>
         <Heading>Profile</Heading>
-        <Button onClick={signOut}>Sign Out</Button>
+        <Button onClick={() => signOut({ callbackUrl: "/" })}>Sign Out</Button>
       </div>
 
       <p>

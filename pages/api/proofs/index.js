@@ -28,6 +28,9 @@ export default async function handler(req, res) {
     if (!allProofs) {
       return res.status(404).json({ message: "The Library has no proofs at the moment. Check back later." });
     }
+    if (allProofs.failed) {
+      return res.status(500).json({ message: allProofs.message });
+    }
     res.status(200).json(allProofs);
   } else {
     res.status(405).json({ message: "Method not allowed" });

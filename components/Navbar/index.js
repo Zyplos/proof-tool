@@ -1,20 +1,12 @@
 import { useState } from "react";
 import styles from "./Navbar.module.css";
-import Link from "next/link";
 import { useRouter } from "next/router";
 
 import SessionBox from "../SessionBox";
-
-function NavLink({ href, children }) {
-  return (
-    <Link href={href} passHref>
-      <a className={styles.navlink}>{children}</a>
-    </Link>
-  );
-}
+import NavLink from "../NavLink";
+import Link from "next/link";
 
 export default function Navbar() {
-  // const { authUser, loading, signInWithGoogle } = useAuth();
   const router = useRouter();
   const [open, setOpen] = useState(false);
 

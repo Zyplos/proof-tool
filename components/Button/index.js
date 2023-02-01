@@ -1,5 +1,6 @@
 import Link from "next/link";
 import styles from "./Button.module.css";
+import navLinkStyles from "../NavLink/NavLink.module.css";
 
 export function Button({ variant = "gray", children, className = "", mini, ...props }) {
   return (
@@ -19,7 +20,7 @@ export function LinkedButton({ variant = "gray", children, className, mini, ...p
 
 export function NavButton({ variant = "gray", children, className = "", mini, ...props }) {
   return (
-    <button className={`${mini ? styles["tool-button-mini"] : styles["tool-button"]} ${styles.navlink} ${className}`} {...props}>
+    <button className={`${mini ? styles["tool-button-mini"] : styles["tool-button"]} ${navLinkStyles.navlink} ${className}`} {...props}>
       {children}
     </button>
   );

@@ -31,8 +31,8 @@ export default function Library() {
     return (
       <MainLayout>
         <Fullbox>
-          <p className={styles["display-text"]}>{error.status == "404" ? "Oops!" : error.status}</p>
-          <p>{error.info.message}</p>
+          <p className={styles["display-text"]}>{proofsError.status == "404" ? "Oops!" : proofsError.status}</p>
+          <p>{proofsError.info.message}</p>
         </Fullbox>
       </MainLayout>
     );
