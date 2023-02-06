@@ -1,10 +1,9 @@
-import { useSession, signIn, signOut } from "next-auth/react";
-import { Button, NavButton } from "../Button";
+import { useSession, signIn } from "next-auth/react";
+import { NavButton } from "../Button";
 import Loader from "../Loader";
 import NavLink from "../NavLink";
 export default function SessionBox() {
   const { data: session, status } = useSession();
-  console.log("SESSIONBOX,", status);
   if (status == "loading") {
     return <Loader />;
   }
@@ -18,8 +17,6 @@ export default function SessionBox() {
           </>
         )}
         <NavLink href="/profile">Profile</NavLink>
-
-        {/* <NavButton onClick={() => signOut()}>Sign Out</NavButton> */}
       </>
     );
   }

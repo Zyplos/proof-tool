@@ -1,0 +1,26 @@
+.footer {
+  font-size: var(--text-xs);
+  display: flex;
+  max-width: 100%;
+  margin-left: auto;
+  margin-right: auto;
+  padding: var(--space-l) var(--space-xl);
+  margin-bottom: var(--space-m);
+  width: 100%;
+  align-items: center;
+  flex-direction: column;
+  justify-content: end;
+}
+
+@media print {
+  .footer {
+    display: none;
+  }
+}
+
+@media screen and (min-width: 1024px) {
+  .footer {
+    max-width: 75%;
+    flex-direction: row;
+  }
+}

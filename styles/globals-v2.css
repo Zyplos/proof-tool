@@ -79,6 +79,7 @@ h6 {
   --c-overlay: hsla(var(--grayH), var(--grayS), var(--gray8L), 0.07);
   --c-background: white;
   --c-body: var(--c-gray8);
+  --c-bodyContrast: white;
   --c-bodyDimmed: hsla(var(--grayH), var(--grayS), var(--gray8L), 0.5);
   --c-fieldBorder: var(--c-gray2);
   --c-buttonBg: var(--c-gray2);
@@ -95,6 +96,7 @@ body.darkMode {
   --c-overlay: hsla(var(--grayH), var(--grayS), var(--gray1L), 0.07);
   --c-background: var(--c-gray8);
   --c-body: var(--c-gray1);
+  --c-bodyContrast: var(--c-gray8);
   --c-bodyDimmed: hsla(var(--grayH), var(--grayS), var(--gray1L), 0.5);
   --c-fieldBorder: var(--c-gray6);
   --c-buttonBg: var(--c-gray6);
