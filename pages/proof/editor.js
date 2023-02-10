@@ -115,8 +115,8 @@ export default function Proof({ data, id }) {
 
   // https://stackoverflow.com/a/73977517
   // quick way to prevent the user from leaving without saving
-  const [unsavedChanges, setUnsavedChanges] = useState(true);
-  const warningText = "Are you sure you want to leave this page? Make sure you've saved your proof!";
+  const [unsavedChanges, setUnsavedChanges] = useState(false);
+  const warningText = "You have unsaved changes.\nAre you sure you want to leave this page? Make sure you've saved your proof!";
 
   useEffect(() => {
     const handleWindowClose = (e) => {
@@ -200,12 +200,14 @@ export default function Proof({ data, id }) {
   const isEditingExistingProof = data.rows.length > 0;
 
   function addNewRow() {
+    setUnsavedChanges(true);
     setRows((prevRows) => {
       return [...prevRows, { claim: "", justification: "given", id: randomId(), references: [] }];
     });
   }
 
   function editClaim(id, claim) {
+    setUnsavedChanges(true);
     setRows((prevRows) => {
       // find the row with the given id
       const row = prevRows.find((row) => row.id === id);
@@ -217,6 +219,7 @@ export default function Proof({ data, id }) {
   }
 
   function editJustification(id, justification) {
+    setUnsavedChanges(true);
     setRows((prevRows) => {
       // find the row with the given id
       const row = prevRows.find((row) => row.id === id);
@@ -229,6 +232,7 @@ export default function Proof({ data, id }) {
   }
 
   function editReference(id, reference, index) {
+    setUnsavedChanges(true);
     setRows((prevRows) => {
       // find the row with the given id
       const row = prevRows.find((row) => row.id === id);
@@ -240,6 +244,7 @@ export default function Proof({ data, id }) {
   }
 
   function handleProofTypeChange(proofType) {
+    setUnsavedChanges(true);
     // clean up justifications that the mode doesnt use
     setRows((prevRows) => {
       // find the row with the given id
@@ -259,15 +264,16 @@ export default function Proof({ data, id }) {
   }
 
   function deleteRow(index) {
+    setUnsavedChanges(true);
     setRows((prevRows) => {
       console.log("DELETEROW", index, prevRows);
       return [...prevRows.slice(0, index), ...prevRows.slice(index + 1)];
     });
   }
 
+  // SECTION submit new proof function
   async function submitNewProof() {
     setIsUpdating(true);
-    setUnsavedChanges(false);
 
     if (rows.length < 2) {
       setIsUpdating(false);
@@ -287,17 +293,17 @@ export default function Proof({ data, id }) {
         setFormFeedback(<span className="info">Proof submitted. It must be approved before it shows up in the library.</span>);
         router.push("/proof/editor?id=" + newData.id).then(() => {
           setIsUpdating(false);
-          setUnsavedChanges(true);
+          setUnsavedChanges(false);
         });
       })
       .catch((err) => {
         setIsUpdating(false);
-        setUnsavedChanges(true);
 
         setFormFeedback(<span className="error">Sorry, could not submit new proof. {err.info.message}</span>);
       });
   }
 
+  // SECTION submit edited proof function
   async function submitEditedProof() {
     setIsUpdating(true);
     // console.log(data);
@@ -318,6 +324,7 @@ export default function Proof({ data, id }) {
       .then(() => {
         // mutate({ ...data, proof: rows });
         setIsUpdating(false);
+        setUnsavedChanges(false);
         setFormFeedback(<span className="info">Proof updated.</span>);
       })
       .catch((err) => {
@@ -330,9 +337,9 @@ export default function Proof({ data, id }) {
     dialogBox.current.showModal();
   }
 
+  // SECTION delete proof function
   async function deleteProof() {
     setIsUpdating(true);
-    setUnsavedChanges(false);
 
     fetcher("/api/proofs/" + id, {
       method: "DELETE",
@@ -342,16 +349,16 @@ export default function Proof({ data, id }) {
         setFormFeedback(<span className="info">Proof deleted.</span>);
         router.push("/profile").then(() => {
           setIsUpdating(false);
-          setUnsavedChanges(true);
+          setUnsavedChanges(false);
         });
       })
       .catch((err) => {
         setIsUpdating(false);
-        setUnsavedChanges(true);
         setFormFeedback(<span className="error">Sorry, could not delete this proof. {err.info.message}</span>);
       });
   }
 
+  // SECTION post proof status (teacher only)
   async function postProofStatus(bool) {
     setIsUpdating(true);
 
