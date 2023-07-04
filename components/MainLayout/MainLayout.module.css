@@ -3,6 +3,8 @@
   flex-direction: column;
   height: 100%;
   width: 100%;
+  min-height: 100%;
+  min-width: 100%;
 }
 
 .content-layout {
@@ -11,11 +13,12 @@
   margin-right: auto;
   padding: 0 var(--space-l);
   padding-bottom: var(--space-3xl);
-  width: 100%;
+  /* max-width: 100%; */
+  /* width: 100%; */
 }
 
 @media screen and (min-width: 800px) {
   .content-layout {
-    width: 90%;
+    width: 85%;
   }
 }

@@ -416,9 +416,9 @@ export default function Proof({ data, id }) {
       )}
       <div className={styles["toolbox"]}>
         {!isPrintMode && (
-          <button className={`${styles["tool-button"]} ${styles["button-gray"]}`} onClick={addNewRow} disabled={isUpdating}>
+          <Button onClick={addNewRow} disabled={isUpdating}>
             + New Row
-          </button>
+          </Button>
         )}
         {isPrintMode && (
           <Button onClick={() => window.print()} disabled={isUpdating}>
@@ -469,13 +469,9 @@ export default function Proof({ data, id }) {
         )}
         {id && !proofStatus && <span>Pending professor approval.</span>}
         {/* <span className={styles["end-of-proof"]}>∎</span> */}
-        <button
-          className={`${styles["tool-button"]} ${styles["button-green"]}`}
-          onClick={isEditingExistingProof ? submitEditedProof : submitNewProof}
-          disabled={isUpdating}
-        >
+        <Button variant="green" onClick={isEditingExistingProof ? submitEditedProof : submitNewProof} disabled={isUpdating}>
           ∎ Submit
-        </button>
+        </Button>
       </div>
       <p>{formFeedback}</p>
       <details style={{ backgroundColor: "#111", padding: "32px" }} className={styles["editor-help"]}>

@@ -1,5 +1,5 @@
 .tool-button {
-  padding: 16px 28px;
+  padding: var(--space-m) var(--space-l);
   border: none;
   color: inherit;
   cursor: pointer;
@@ -11,7 +11,7 @@
 }
 
 .tool-button-mini {
-  padding: 7px 7px;
+  padding: var(--space-xs) var(--space-s);
   border: none;
   color: inherit;
   cursor: pointer;
@@ -26,108 +26,16 @@
 }
 
 .button-green {
-  background-color: #08a850;
-  color: #fff;
+  background-color: var(--c-green);
+  color: var(--c-bodyContrast);
 }
 
 .button-gray {
-  background-color: #4d4d4d;
-  color: #fff;
+  background-color: var(--c-gray6);
+  color: var(--c-bodyContrast);
 }
 
 .button-red {
-  background-color: #ff3e3e;
-  color: #000;
-}
-
-.navbar {
-  font-size: 24px;
-  display: flex;
-  max-width: 100%;
-  margin-left: auto;
-  margin-right: auto;
-  padding: 24px 36px;
-  margin-bottom: 32px;
-  width: 100%;
-  align-items: center;
-}
-
-.navbar-toggle {
-  position: absolute;
-  top: 5px;
-  right: 5px;
-  padding: 16px;
-  display: block;
-  z-index: 100;
-  background-color: #000;
-  width: 64px;
-  height: 64px;
-}
-
-.navbar {
-  flex-direction: column;
-}
-
-.navlinks-section {
-  display: flex;
-  align-items: center;
-}
-
-.navtitle {
-  margin-bottom: 32px;
-}
-
-.navtitle {
-  flex-grow: 1;
-  font-weight: bolder;
-}
-
-.navtitle a {
-  text-decoration: none;
-}
-
-.navlink {
-  padding: 14px 18px;
-  border-radius: 10px;
-  margin: 0 8px;
-  font-size: 18px;
-  background-color: #0c0c0c;
-  text-decoration: none;
-}
-
-.navlink:hover {
-  background-color: #1a346d;
-  text-decoration: underline;
-}
-
-.navlink-discord {
-  background: #5865f2;
-}
-
-.navlinks-section-toggle {
-  display: none !important;
-}
-
-@media screen and (min-width: 800px) {
-  .navbar {
-    max-width: 75%;
-    flex-direction: row;
-  }
-
-  .navbar-toggle {
-    display: none;
-  }
-
-  .navtitle {
-    margin-bottom: 0;
-  }
-
-  .navlinks-section {
-    display: flex;
-    align-items: center;
-  }
-
-  .navlinks-section-toggle {
-    display: flex !important;
-  }
+  background-color: var(--c-red);
+  color: var(--c-bodyContrast);
 }

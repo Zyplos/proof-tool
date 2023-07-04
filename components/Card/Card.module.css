@@ -1,6 +1,6 @@
 .card {
   padding: var(--space-xl);
-  background-color: var(--c-overlay);
+  background-color: var(--c-gray1);
 }
 
 .card-footer {

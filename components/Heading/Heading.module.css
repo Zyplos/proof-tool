@@ -1,4 +1,4 @@
 .subtitle {
-  color: rgb(204, 204, 204);
+  color: var(--c-gray5);
   font-size: 0.6em;
 }
