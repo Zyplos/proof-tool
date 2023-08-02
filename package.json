@@ -1,6 +1,6 @@
 {
-  "name": "proof-study",
-  "version": "0.2.2",
+  "name": "proof-tool",
+  "version": "0.1.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -9,21 +9,14 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@next-auth/mongodb-adapter": "^1.1.0",
-    "mongodb": "^4.10.0",
-    "next": "^12.3.1",
-    "next-auth": "^4.12.2",
-    "normalize.css": "^8.0.1",
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0",
-    "react-markdown": "^8.0.3",
-    "rehype-katex": "^6.0.2",
-    "remark-math": "^5.1.1",
-    "swr": "^1.3.0"
-  },
-  "license": "NCSA",
-  "devDependencies": {
-    "eslint": "8.18.0",
-    "eslint-config-next": "12.1.6"
+    "@types/node": "20.4.5",
+    "@types/react": "18.2.18",
+    "@types/react-dom": "18.2.7",
+    "eslint": "8.46.0",
+    "eslint-config-next": "13.4.12",
+    "next": "13.4.12",
+    "react": "18.2.0",
+    "react-dom": "18.2.0",
+    "typescript": "5.1.6"
   }
 }
